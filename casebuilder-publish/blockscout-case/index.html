@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1600">
+<title>Blockscout — Кейс</title>
+<link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,900|poppins:400,500,600,700,800|jetbrains-mono:400,500&display=swap&subset=cyrillic,cyrillic-ext,latin" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  /* =========================================================
+     БРЕНД-ТОКЕНЫ — Blockscout (Chakra-based)
+     ========================================================= */
+  :root {
+    --bg:      #F7FAFC;        /* Chakra gray.50 */
+    --ink:     #101112;        /* Blockscout dark */
+    --muted:   #718096;        /* Chakra gray.500 */
+    --accent:  #2B6CB0;        /* Chakra blue.600 — ETH brand */
+    --accent-2:#805AD5;        /* Chakra purple.500 — Multichain brand */
+    --accent-3:#3182CE;        /* Chakra blue.500 */
+    --surface: #FFFFFF;
+    --card:    #EDF2F7;        /* Chakra gray.100 */
+
+    --display: 'Poppins', 'Inter', system-ui, -apple-system, sans-serif;
+    --body:    'Inter', system-ui, -apple-system, sans-serif;
+    --mono:    'JetBrains Mono', ui-monospace, monospace;
+
+    --sect-pad-y: 160px;
+    --sect-pad-x: 80px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--ink); font-family: var(--body); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  body { font-size: 18px; line-height: 1.5; }
+  img { max-width: 100%; display: block; }
+  button { font: inherit; }
+
+  .stage { max-width: 1600px; margin: 0 auto; overflow: hidden; }
+  .section { position: relative; padding: var(--sect-pad-y) var(--sect-pad-x); }
+
+  .export-btn {
+    position: absolute; top: 20px; right: 20px;
+    background: var(--ink); color: #fff;
+    border: none; padding: 10px 18px;
+    font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    border-radius: 999px; cursor: pointer; z-index: 20;
+    transition: background .15s;
+  }
+  .export-btn:hover { background: var(--accent); }
+  .exporting .export-btn { visibility: hidden; }
+
+  .toolbar {
+    position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: #fff; z-index: 100;
+    padding: 10px 14px 10px 20px; border-radius: 999px;
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+    display: flex; gap: 12px; align-items: center;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+  }
+  .toolbar button {
+    background: transparent; color: inherit;
+    border: 1px solid rgba(255,255,255,0.25);
+    padding: 6px 14px; border-radius: 999px; cursor: pointer;
+    letter-spacing: 0.08em;
+  }
+  .toolbar button:hover { background: var(--accent); border-color: var(--accent); }
+  .toolbar.hidden { display: none; }
+
+  /* Typography */
+  .eyebrow   { font-family: var(--mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .display   { font-family: var(--display); font-size: clamp(4.5rem, 8vw, 8rem); line-height: 0.96; letter-spacing: -0.035em; font-weight: 700; }
+  .h2        { font-family: var(--display); font-size: clamp(2.5rem, 4.5vw, 4.2rem); line-height: 1.02; letter-spacing: -0.025em; font-weight: 600; }
+  .h3        { font-family: var(--display); font-size: clamp(1.5rem, 2.2vw, 2.25rem); line-height: 1.15; letter-spacing: -0.015em; font-weight: 600; }
+  .lead      { font-size: clamp(1.25rem, 1.6vw, 1.5rem); line-height: 1.45; font-weight: 400; }
+  .body      { font-size: 1.125rem; line-height: 1.6; }
+  .caption   { font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .accent    { color: var(--accent); }
+  .accent-2  { color: var(--accent-2); }
+
+  /* SECTION 1 — HERO */
+  .hero {
+    min-height: 1100px;
+    display: grid; grid-template-rows: auto 1fr auto auto;
+    gap: 72px;
+  }
+  .hero-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .hero-title { max-width: 1440px; }
+  .hero-title .display span { background: linear-gradient(90deg, var(--accent) 0%, var(--accent-2) 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .hero-title .lead { max-width: 920px; margin-top: 40px; color: var(--ink); }
+
+  .hero-visual {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+    border-radius: 32px;
+    min-height: 580px;
+    padding: 64px;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+  }
+  .hero-visual::after {
+    content: ""; position: absolute; inset: 0;
+    background-image: radial-gradient(circle at 20% 20%, rgba(255,255,255,0.18) 0%, transparent 50%),
+                      radial-gradient(circle at 85% 80%, rgba(0,0,0,0.12) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .hero-image-slot {
+    width: 100%; max-width: 1120px;
+    background: var(--surface);
+    border-radius: 6px;
+    box-shadow: 0 50px 100px rgba(0,0,0,0.32);
+    position: relative; z-index: 1;
+    overflow: hidden;
+  }
+  .hero-image-slot img { width: 100%; height: auto; display: block; }
+
+  .hero-meta-row {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 40px;
+    border-top: 1px solid rgba(0,0,0,0.12); padding-top: 32px;
+  }
+  .meta-cell .caption { margin-bottom: 10px; }
+  .meta-cell .value { font-size: 1.15rem; font-weight: 500; line-height: 1.3; }
+
+  /* SECTION 2 — PROBLEM */
+  .problem { background: var(--bg); }
+  .problem-head { max-width: 1240px; margin-bottom: 80px; }
+  .problem-head .h2 { margin-top: 32px; }
+
+  .before-after {
+    background: var(--card);
+    border-radius: 24px;
+    padding: 48px;
+    margin-bottom: 80px;
+  }
+  .before-after .label-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 32px;
+  }
+  .before-after-img {
+    width: 100%; border-radius: 6px; overflow: hidden;
+    background: var(--surface);
+    box-shadow: 0 30px 60px rgba(0,0,0,0.12);
+  }
+  .before-after-img img { width: 100%; display: block; }
+
+  .problem-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 96px;
+    align-items: start;
+  }
+  .problem-grid .h3 { margin-bottom: 20px; color: var(--muted); }
+  .problem-grid .body + .body { margin-top: 16px; }
+
+  .callout {
+    background: var(--ink); color: #fff;
+    padding: 64px; border-radius: 24px;
+    margin-top: 80px;
+  }
+  .callout .quote-mark { font-size: 6rem; line-height: 0.5; color: var(--accent-2); font-weight: 700; margin-bottom: 12px; }
+  .callout .quote {
+    font-size: clamp(1.5rem, 2.4vw, 2.4rem);
+    line-height: 1.22; letter-spacing: -0.015em; font-weight: 500;
+    max-width: 1200px;
+  }
+  .callout .attr { margin-top: 32px; color: rgba(255,255,255,0.55); font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+  /* SECTION 3 — PROCESS */
+  .process { background: var(--card); }
+  .process-head { max-width: 1200px; margin-bottom: 96px; }
+
+  .block { margin-bottom: 120px; }
+  .block:last-child { margin-bottom: 0; }
+  .block-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 48px; gap: 32px; }
+  .block-head .h3 { max-width: 900px; }
+
+  .refs-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 16px; }
+  .ref-tile {
+    aspect-ratio: 4/3; background: var(--surface);
+    border-radius: 8px;
+    display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end;
+    padding: 24px;
+    color: var(--muted); font-family: var(--mono); font-size: 12px;
+    letter-spacing: 0.05em;
+    overflow: hidden; position: relative;
+  }
+  .ref-tile.with-img { aspect-ratio: 4/3; padding: 0; }
+  .ref-tile.with-img img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+  .ref-tile .ref-name { color: var(--ink); font-family: var(--display); font-size: 1.15rem; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 6px; }
+  .ref-tile .ref-meta { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .ref-tile .ref-spec { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); margin-top: 12px; padding-top: 10px; border-top: 1px dashed rgba(0,0,0,0.1); }
+  .ref-tile.text { aspect-ratio: 3/4; }
+
+  .hypothesis-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .hypothesis {
+    background: var(--surface); padding: 40px;
+    border-radius: 20px; min-height: 320px;
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .hypothesis .num { font-family: var(--mono); font-size: 13px; color: var(--accent); letter-spacing: 0.1em; }
+  .hypothesis h3 { font-size: 1.3rem; line-height: 1.2; letter-spacing: -0.01em; font-weight: 600; }
+  .hypothesis p { font-size: 0.95rem; line-height: 1.55; color: var(--muted); }
+
+  /* Variants — replaces wireframes */
+  .variants-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .variant-tile {
+    background: var(--surface);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.06);
+    aspect-ratio: 4/5;
+  }
+  .variant-tile img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+
+  .tools-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .tool-chip {
+    background: var(--surface); padding: 14px 22px;
+    border-radius: 999px; font-family: var(--mono); font-size: 13px; letter-spacing: 0.05em;
+    display: inline-flex; align-items: center; gap: 10px;
+  }
+  .tool-chip::before {
+    content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+  }
+  .tool-chip.purple::before { background: var(--accent-2); }
+
+  /* SECTION 4 — SOLUTION */
+  .solution { background: var(--bg); }
+  .solution-head { max-width: 1200px; margin-bottom: 96px; }
+
+  .device-split {
+    display: grid; grid-template-columns: 1.6fr 1fr; gap: 64px;
+    align-items: center;
+  }
+  .device-desktop {
+    background: var(--ink); border-radius: 8px;
+    padding: 12px 12px 0; position: relative;
+  }
+  .device-desktop .bar {
+    display: flex; gap: 6px; padding: 6px 4px;
+  }
+  .device-desktop .dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.22); }
+  .device-desktop-screen {
+    aspect-ratio: 16/10; background: var(--surface);
+    border-radius: 3px; margin-top: 6px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted); font-family: var(--mono); font-size: 12px;
+    overflow: hidden;
+  }
+  .device-desktop-screen img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+  .device-mobile {
+    background: var(--ink); border-radius: 40px;
+    padding: 14px; max-width: 320px; margin: 0 auto;
+    position: relative;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.15);
+  }
+  .device-mobile::before {
+    content: ""; position: absolute; top: 22px; left: 50%; transform: translateX(-50%);
+    width: 110px; height: 28px; background: var(--ink);
+    border-radius: 14px; z-index: 2;
+  }
+  .device-mobile-screen {
+    aspect-ratio: 9/19; background: var(--surface);
+    border-radius: 28px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted); font-family: var(--mono); font-size: 12px;
+    overflow: hidden;
+  }
+  .device-mobile-screen img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+
+  /* Chakra callout */
+  .system-callout {
+    background: var(--ink); color: #fff;
+    border-radius: 24px;
+    padding: 64px;
+    display: grid; grid-template-columns: 1fr 1.4fr; gap: 64px;
+    align-items: center;
+  }
+  .system-callout .label { font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.55); margin-bottom: 16px; }
+  .system-callout .h-system {
+    font-size: clamp(2rem, 3vw, 2.75rem); line-height: 1.05; letter-spacing: -0.02em; font-weight: 600;
+  }
+  .system-callout .h-system span { background: linear-gradient(90deg, #4299E1 0%, #B794F4 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .system-callout p { color: rgba(255,255,255,0.78); font-size: 1.125rem; line-height: 1.55; }
+  .system-callout .chakra-tag {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.08); padding: 10px 16px; border-radius: 999px;
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    margin-top: 24px;
+  }
+  .system-callout .chakra-tag::before {
+    content: ""; width: 8px; height: 8px; border-radius: 50%; background: linear-gradient(135deg, #319795 0%, #B794F4 100%);
+  }
+
+  .themes-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;
+  }
+  .theme-card {
+    border-radius: 20px;
+    padding: 36px 28px;
+    aspect-ratio: 4/5;
+    display: flex; flex-direction: column; justify-content: space-between;
+    position: relative; overflow: hidden;
+  }
+  .theme-card .theme-name { font-family: var(--display); font-weight: 600; font-size: 1.3rem; letter-spacing: -0.01em; }
+  .theme-card .theme-meta { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.7; }
+  .theme-card .swatches { display: flex; gap: 6px; margin-top: 16px; }
+  .theme-card .sw { width: 26px; height: 26px; border-radius: 8px; }
+  .theme-card .preview {
+    flex: 1; margin: 20px 0;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 11px; opacity: 0.5;
+  }
+
+  /* Design system docs full-width image */
+  .ds-docs {
+    background: var(--surface);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.08);
+  }
+  .ds-docs img { width: 100%; display: block; }
+
+  .palette-strip { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
+  .swatch {
+    aspect-ratio: 1; border-radius: 18px; position: relative;
+    display: flex; align-items: flex-end; padding: 18px;
+    color: #fff;
+  }
+  .swatch.light { color: var(--ink); }
+  .swatch-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .swatch-label b { display: block; font-weight: 500; font-size: 13px; margin-bottom: 2px; letter-spacing: 0; text-transform: none; font-family: var(--display); }
+
+  .type-specimen { background: var(--surface); border-radius: 24px; padding: 72px; }
+  .type-row { display: grid; grid-template-columns: 200px 1fr; gap: 48px; align-items: baseline; padding: 32px 0; border-bottom: 1px solid rgba(0,0,0,0.08); }
+  .type-row:last-child { border-bottom: none; }
+  .type-row .label .caption { display: block; margin-bottom: 4px; }
+  .type-row .label .size { font-family: var(--mono); font-size: 14px; color: var(--ink); }
+  .type-row .sample { letter-spacing: -0.02em; }
+  .type-row .sample.display { font-size: 4rem; line-height: 0.95; font-weight: 700; letter-spacing: -0.04em; }
+  .type-row .sample.h2s { font-size: 2.25rem; line-height: 1.05; font-weight: 600; letter-spacing: -0.02em; }
+  .type-row .sample.body-s { font-size: 1.125rem; line-height: 1.55; font-weight: 400; letter-spacing: 0; }
+
+  .flow-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: stretch; }
+  .flow-tile {
+    background: var(--surface);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.08);
+    display: flex;
+  }
+  .flow-tile img { width: 100%; height: auto; display: block; }
+
+  /* SECTION 5 — RESULT */
+  .result { background: var(--ink); color: #fff; }
+  .result .eyebrow, .result .caption { color: rgba(255,255,255,0.55); }
+  .result-head { max-width: 1200px; margin-bottom: 48px; }
+  .result-head .h2 { color: #fff; }
+
+  .metrics-row {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px;
+    padding-top: 48px; margin-bottom: 120px;
+    border-top: 1px solid rgba(255,255,255,0.12);
+  }
+  .metric { border-left: 2px solid var(--accent-2); padding-left: 24px; }
+  .metric .num { font-size: clamp(4rem, 6.5vw, 6rem); line-height: 0.95; font-weight: 700; letter-spacing: -0.045em; }
+  .metric .num span { background: linear-gradient(90deg, #4299E1 0%, #B794F4 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .metric .num small { font-size: 0.4em; font-weight: 500; letter-spacing: -0.02em; color: rgba(255,255,255,0.7); }
+  .metric .label { font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.6); margin-top: 16px; max-width: 320px; }
+
+  .testimonials-block {
+    background: rgba(255,255,255,0.04);
+    border-radius: 24px; padding: 56px;
+    margin-bottom: 120px;
+  }
+  .testimonials-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-top: 40px; }
+  .test-card {
+    background: rgba(255,255,255,0.06);
+    border-radius: 16px; padding: 32px;
+    border-left: 3px solid var(--accent-2);
+  }
+  .test-card .quote { font-size: 1.15rem; line-height: 1.45; color: rgba(255,255,255,0.95); }
+  .test-card .who { margin-top: 20px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.55); }
+
+  .insights-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; margin-bottom: 120px; }
+  .insight { padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.2); }
+  .insight .num { font-family: var(--mono); font-size: 13px; color: var(--accent-2); letter-spacing: 0.08em; margin-bottom: 16px; }
+  .insight h3 { font-size: 1.35rem; line-height: 1.2; margin-bottom: 12px; font-weight: 600; }
+  .insight p { color: rgba(255,255,255,0.7); font-size: 1rem; line-height: 1.55; }
+
+  .takeaway { max-width: 960px; margin-bottom: 120px; }
+  .takeaway p { color: rgba(255,255,255,0.78); font-size: 1.35rem; line-height: 1.5; margin-top: 32px; font-weight: 400; }
+
+  .footer-credit {
+    margin-top: 80px; display: flex; justify-content: space-between; align-items: center;
+    padding-top: 32px; border-top: 1px solid rgba(255,255,255,0.1);
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+  }
+  .footer-credit a { color: #fff; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 2px; }
+
+  .mt-40 { margin-top: 40px; }
+  .mt-64 { margin-top: 64px; }
+  .mb-32 { margin-bottom: 32px; }
+
+  /* Trusted-by networks block */
+  .trusted-by {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 48px;
+    margin-bottom: 120px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.04);
+  }
+  .trusted-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 32px; gap: 32px; }
+  .trusted-head .lead { color: var(--ink); font-weight: 500; max-width: 720px; }
+  .trusted-grid {
+    display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px;
+  }
+  .trusted-logo {
+    aspect-ratio: 2/1;
+    background: var(--card);
+    border-radius: 8px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px;
+    padding: 16px;
+    position: relative;
+  }
+  .trusted-logo .network-name {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 1.05rem;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+  .trusted-logo .network-spec {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+    opacity: 0.7;
+  }
+  .trusted-logo img { max-width: 70%; max-height: 40px; object-fit: contain; }
+
+  /* Image prep guide — hidden on export */
+  .prep-guide {
+    background: #FFFBEA;
+    border: 1px dashed #D69E2E;
+    border-radius: 12px;
+    padding: 24px 32px;
+    margin: 24px 32px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #744210;
+  }
+  .prep-guide .prep-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    color: #975A16;
+    font-weight: 600;
+  }
+  .prep-guide ul { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 24px; }
+  .prep-guide li { padding-left: 16px; position: relative; }
+  .prep-guide li::before { content: "→"; position: absolute; left: 0; color: #975A16; }
+  .prep-guide b { font-weight: 600; }
+  .prep-guide .toggle {
+    background: transparent; border: 1px solid #975A16; color: #975A16;
+    padding: 4px 12px; border-radius: 999px; cursor: pointer;
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+    margin-left: auto;
+  }
+  .prep-guide .prep-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .prep-guide.collapsed ul { display: none; }
+  .exporting-all .prep-guide,
+  .prep-guide.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="toolbar" id="toolbar">
+  <span>Blockscout · Кейс</span>
+  <button onclick="exportAll()">Экспорт всех</button>
+  <button onclick="document.getElementById('toolbar').classList.add('hidden')">Скрыть</button>
+</div>
+
+<div class="stage">
+
+<!-- ========== PREP GUIDE — размеры ассетов (не экспортируется) ========== -->
+<div class="prep-guide" id="prepGuide">
+  <div class="prep-head">
+    <div class="prep-title">Ассеты для подготовки — размеры (не экспортируется в PNG)</div>
+    <button class="toggle" onclick="document.getElementById('prepGuide').classList.toggle('collapsed')">Свернуть</button>
+  </div>
+  <ul>
+    <li><b>Hero · new-hero.png</b> — 2240×1680 @2x · главный скрин ETH-эксплорера</li>
+    <li><b>Before · old-blockscout.jpg</b> — 2688×ист. @2x · аудит 16 экранов</li>
+    <li><b>Etherscan (большая плитка)</b> — 1120×840 @2x</li>
+    <li><b>Маленькие плитки конкурентов</b> — 560×420 @2x · по 3 штуки</li>
+    <li><b>Варианты · wire-01 / wire-02</b> — 1420×1770 @2x · 4:5</li>
+    <li><b>Desktop · desktop-main.png</b> — 1700×1060 @2x · 16:10</li>
+    <li><b>Mobile · mobile-main.png</b> — 640×1350 @2x · 9:19</li>
+    <li><b>Дизайн-система · Customizable colors.png</b> — 2880×auto @2x</li>
+    <li><b>Flow · flow-01 / flow-02</b> — 1408×880 @2x</li>
+    <li><b>Логотипы сетей</b> — 240×120 @2x (лучше SVG) · Ethereum, Optimism, Base, Immutable, Shibarium, Gnosis</li>
+  </ul>
+</div>
+
+<!-- ========== 1 — HERO ========== -->
+<section class="section hero" id="s1-hero">
+  <button class="export-btn" onclick="exportSection('s1-hero','01-hero')">Export PNG</button>
+
+  <div class="hero-top">
+    <div class="eyebrow">Кейс · Редизайн и дизайн-система</div>
+    <div class="eyebrow">01 / 05 · Контекст</div>
+  </div>
+
+  <div class="hero-title">
+    <div class="caption mb-32">Blockscout</div>
+    <h1 class="display">От обозревателя<br>из нулевых — до<br><span>нового стандарта</span></h1>
+    <p class="lead">
+      Полный редизайн продукта Blockscout — open-source обозревателя блокчейна: от плотного табличного интерфейса к современной мультичейн-платформе с дизайн-системой на базе Chakra UI — полностью адаптивной и легко изменяемой.
+    </p>
+  </div>
+
+  <div class="hero-visual">
+    <div class="hero-image-slot">
+      <img src="./images/new-hero.png" alt="Blockscout — редизайн главной страницы">
+    </div>
+  </div>
+
+  <div class="hero-meta-row">
+    <div class="meta-cell">
+      <div class="caption">Роль</div>
+      <div class="value">Lead UI/UX Designer</div>
+    </div>
+    <div class="meta-cell">
+      <div class="caption">Период</div>
+      <div class="value">2024–2025 · живой продукт</div>
+    </div>
+    <div class="meta-cell">
+      <div class="caption">Инструменты</div>
+      <div class="value">Figma · FigJam · Chakra · Mixpanel</div>
+    </div>
+    <div class="meta-cell">
+      <div class="caption">Платформа</div>
+      <div class="value">Веб · Адаптивный</div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 2 — PROBLEM ========== -->
+<section class="section problem" id="s2-problem">
+  <button class="export-btn" onclick="exportSection('s2-problem','02-problem')">Export PNG</button>
+
+  <div class="problem-head">
+    <div class="eyebrow">02 / 05 · Проблема</div>
+    <h2 class="h2">Сильный продукт<br>в интерфейсе <span class="accent">из нулевых</span></h2>
+  </div>
+
+  <div class="before-after">
+    <div class="label-row">
+      <div class="caption">Было · Legacy Blockscout — проанализировано 16 экранов</div>
+      <div class="caption">Аудит</div>
+    </div>
+    <div class="before-after-img">
+      <img src="./images/old-blockscout.jpg" alt="Старый интерфейс Blockscout — 16 экранов">
+    </div>
+  </div>
+
+  <div class="problem-grid">
+    <div>
+      <div class="h3">Продукт</div>
+      <p class="body">
+        Blockscout — open-source обозреватель блокчейна с полной кастомизацией. Публичный вход в мир блокчейна для разработчиков, операторов сетей и конечных пользователей.
+      </p>
+      <p class="body">
+        Инженерно продукт уже был сильным. Визуально — застрявшим в прошлом: плотные тёмно-синие таблицы, непоследовательная типографика, перегруженные шапки. Интерфейс, от которого люди шли искать «настоящую» альтернативу.
+      </p>
+    </div>
+    <div>
+      <div class="h3">Боль</div>
+      <p class="body">
+        Etherscan задал визуальный и UX-стандарт для обозревателей блокчейна. У Blockscout была инженерная репутация — но на первом впечатлении он терял доверие пользователей.
+      </p>
+      <p class="body">
+        Задача была большой: переделать весь интерфейс, собрать полноценную дизайн-систему и догнать лидера рынка — не сломав то, что уже работало у 100+ сетей, развёрнутых на Blockscout. Нужно было создать продукт, который можно легко развернуть под любую сеть, менять стили под бренд сети и показывать маркетинговые фичи.
+      </p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <div class="quote-mark">«</div>
+    <div class="quote">
+      Нам нужен был не просто более красивый обозреватель. Нам нужно было выглядеть как стандарт — а не как альтернатива.
+    </div>
+    <div class="attr">— Внутренний бриф · Discovery-фаза</div>
+  </div>
+</section>
+
+<!-- ========== 3 — PROCESS ========== -->
+<section class="section process" id="s3-process">
+  <button class="export-btn" onclick="exportSection('s3-process','03-process')">Export PNG</button>
+
+  <div class="process-head">
+    <div class="eyebrow">03 / 05 · Процесс</div>
+    <h2 class="h2 mt-40">От аудита конкурентов<br>к системе, которой доверяют<br><span class="accent-2">3000+ сетей</span></h2>
+    <p class="lead" style="margin-top:32px; max-width: 1000px; color: var(--muted)">
+      Начала с глубокого разбора Etherscan и остального рынка обозревателей — что ожидают пользователи, где Blockscout дотягивает, где отстаёт. Уже посреди проекта приоритет аудитории сместился: с операторов сетей (B2B) на конечного пользователя, который ведёт портфолио и трекает транзакции (B2C). Система должна была работать на обеих.
+    </p>
+  </div>
+
+  <!-- Trusted by -->
+  <div class="trusted-by">
+    <div class="trusted-head">
+      <div>
+        <div class="eyebrow mb-32">Сейчас нам доверяют</div>
+        <div class="lead">Blockscout развёрнут более чем на 3000 сетях — от крупнейших L1/L2 до comm-проектов.</div>
+      </div>
+      <div class="caption">6 / 3000+</div>
+    </div>
+    <div class="trusted-grid">
+      <div class="trusted-logo">
+        <div class="network-name">Ethereum</div>
+        <div class="network-spec">SVG · 240×120 @2x</div>
+      </div>
+      <div class="trusted-logo">
+        <div class="network-name">Optimism</div>
+        <div class="network-spec">SVG · 240×120 @2x</div>
+      </div>
+      <div class="trusted-logo">
+        <div class="network-name">Base</div>
+        <div class="network-spec">SVG · 240×120 @2x</div>
+      </div>
+      <div class="trusted-logo">
+        <div class="network-name">Immutable</div>
+        <div class="network-spec">SVG · 240×120 @2x</div>
+      </div>
+      <div class="trusted-logo">
+        <div class="network-name">Shibarium</div>
+        <div class="network-spec">SVG · 240×120 @2x</div>
+      </div>
+      <div class="trusted-logo">
+        <div class="network-name">Gnosis</div>
+        <div class="network-spec">SVG · 240×120 @2x</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- References -->
+  <div class="block">
+    <div class="block-head">
+      <div>
+        <div class="eyebrow mb-32">01 — Ресёрч и референсы</div>
+        <div class="h3">Аудит рынка — лидер плюс челленджеры</div>
+      </div>
+      <div class="caption">Мудборд</div>
+    </div>
+    <div class="refs-grid">
+      <div class="ref-tile with-img"><img src="./images/etherscan.png" alt="Etherscan — главный конкурент"></div>
+      <div class="ref-tile">
+        <div class="ref-name">OKLink</div>
+        <div class="ref-meta">Мультичейн-обозреватель</div>
+        <div class="ref-spec">Скрин 560×420 @2x</div>
+      </div>
+      <div class="ref-tile">
+        <div class="ref-name">BscScan</div>
+        <div class="ref-meta">Семейство EVM-сканеров</div>
+        <div class="ref-spec">Скрин 560×420 @2x</div>
+      </div>
+      <div class="ref-tile">
+        <div class="ref-name">Solscan</div>
+        <div class="ref-meta">Non-EVM паттерны</div>
+        <div class="ref-spec">Скрин 560×420 @2x</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hypotheses -->
+  <div class="block">
+    <div class="block-head">
+      <div>
+        <div class="eyebrow mb-32">02 — Гипотезы</div>
+        <div class="h3">Три гипотезы, которые двигали редизайн</div>
+      </div>
+    </div>
+    <div class="hypothesis-list">
+      <div class="hypothesis">
+        <div class="num">H1</div>
+        <h3>Перейти с навигации под оператора — на навигацию под пользователя</h3>
+        <p>Большая часть трафика — конечные пользователи, которые ищут адреса и транзакции, а не админы сетей. Информационная архитектура должна вести с портфолио и tx-потока, а не с настроек.</p>
+      </div>
+      <div class="hypothesis">
+        <div class="num">H2</div>
+        <h3>Построить дизайн-систему на токенах поверх Chakra UI</h3>
+        <p>Каждая из 1000+ сетей должна перебрендироваться без захода в код, а фронт-команда — поддерживать систему на уже знакомом фреймворке. Единица дизайна — токен, а не экран.</p>
+      </div>
+      <div class="hypothesis">
+        <div class="num">H3</div>
+        <h3>Снизить плотность данных на первом экране, детали — в drill-down</h3>
+        <p>Старый UI вываливал всё сразу. Новый паттерн: сначала обзор, который можно просканировать, тяжёлые данные — по запросу.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Variants (instead of wireframes) -->
+  <div class="block">
+    <div class="block-head">
+      <div>
+        <div class="eyebrow mb-32">03 — Варианты</div>
+        <div class="h3">Без low-fi — сразу рисовала визуальные варианты, быстрее давало команде то, что можно реально оценить</div>
+      </div>
+    </div>
+    <div class="variants-grid">
+      <div class="variant-tile"><img src="./images/wire-01.png" alt="Вариант оформления — главный экран"></div>
+      <div class="variant-tile"><img src="./images/wire-02.png" alt="Вариант оформления — детали"></div>
+    </div>
+  </div>
+
+  <!-- Tools -->
+  <div class="block">
+    <div class="block-head">
+      <div>
+        <div class="eyebrow mb-32">04 — Стек</div>
+        <div class="h3">Инструменты проекта</div>
+      </div>
+    </div>
+    <div class="tools-row">
+      <div class="tool-chip">Figma</div>
+      <div class="tool-chip">FigJam</div>
+      <div class="tool-chip">Notion</div>
+      <div class="tool-chip purple">Chakra UI</div>
+      <div class="tool-chip purple">OpenAI</div>
+      <div class="tool-chip">Mixpanel</div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 4 — SOLUTION ========== -->
+<section class="section solution" id="s4-solution">
+  <button class="export-btn" onclick="exportSection('s4-solution','04-solution')">Export PNG</button>
+
+  <div class="solution-head">
+    <div class="eyebrow">04 / 05 · Решение</div>
+    <h2 class="h2 mt-40">Мультичейн<br>мультибренд<br><span class="accent-2">системный дизайн</span></h2>
+  </div>
+
+  <!-- Key screens -->
+  <div class="block">
+    <div class="block-head">
+      <div>
+        <div class="eyebrow mb-32">Ключевые экраны</div>
+        <div class="h3">Multichain-эксплорер на десктопе и мобильная версия</div>
+      </div>
+    </div>
+    <div class="device-split">
+      <div class="device-desktop">
+        <div class="bar">
+          <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+        <div class="device-desktop-screen">
+          <img src="./images/desktop-main.png" alt="Multichain explorer — десктоп">
+        </div>
+      </div>
+      <div class="device-mobile">
+        <div class="device-mobile-screen">
+          <img src="./images/mobile-main.png" alt="Blockscout — мобильная версия">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chakra system callout -->
+  <div class="block">
+    <div class="system-callout">
+      <div>
+        <div class="label">Foundation</div>
+        <div class="h-system">Дизайн-система на базе <span>Chakra UI</span> — с расширением под Blockscout</div>
+      </div>
+      <div>
+        <p>
+          Не строила систему с нуля. Взяла Chakra UI как фундамент — фреймворк, который фронт-команда уже знала и могла поддерживать. Доработала под стиль и требования Blockscout: расширила палитру, добавила tokens для Light / Dark / мультичейн-брендов, переписала компоненты под продуктовые сценарии.
+        </p>
+        <p style="margin-top: 16px">
+          Микросервисы переиспользуют те же компоненты — фронт ускоряется, сети получают единый язык интерфейса.
+        </p>
+        <div class="chakra-tag">Built on Chakra UI</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Themes -->
+  <div class="block">
+    <div class="block-head">
+      <div>
+        <div class="eyebrow mb-32">Темизация</div>
+        <div class="h3">Четыре темы, одна система — сети перебрендируются без правок в коде</div>
+      </div>
+    </div>
+    <div class="themes-grid">
+      <div class="theme-card" style="background: #FFFFFF; color: #101112; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08)">
+        <div>
+          <div class="theme-meta">Тема 01 · ETH</div>
+          <div class="theme-name">Light</div>
+        </div>
+        <div class="preview" style="background: #F7FAFC; color: #718096">light surface</div>
+        <div class="swatches">
+          <div class="sw" style="background: #FFFFFF; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08)"></div>
+          <div class="sw" style="background: #2B6CB0"></div>
+          <div class="sw" style="background: #3182CE"></div>
+          <div class="sw" style="background: #EBF8FF"></div>
+        </div>
+      </div>
+      <div class="theme-card" style="background: #101112; color: #fff">
+        <div>
+          <div class="theme-meta">Тема 02 · ETH</div>
+          <div class="theme-name">Dark</div>
+        </div>
+        <div class="preview" style="background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.5)">dark surface</div>
+        <div class="swatches">
+          <div class="sw" style="background: #101112; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15)"></div>
+          <div class="sw" style="background: #4299E1"></div>
+          <div class="sw" style="background: #63B3ED"></div>
+          <div class="sw" style="background: #2D3748"></div>
+        </div>
+      </div>
+      <div class="theme-card" style="background: linear-gradient(135deg, #6B46C1 0%, #805AD5 100%); color: #fff">
+        <div>
+          <div class="theme-meta">Тема 03 · Multichain</div>
+          <div class="theme-name">Brand</div>
+        </div>
+        <div class="preview" style="background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.65)">brand surface</div>
+        <div class="swatches">
+          <div class="sw" style="background: #6B46C1; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2)"></div>
+          <div class="sw" style="background: #B794F4"></div>
+          <div class="sw" style="background: #E9D8FD"></div>
+          <div class="sw" style="background: #fff"></div>
+        </div>
+      </div>
+      <div class="theme-card" style="background: #1A202C; color: #fff">
+        <div>
+          <div class="theme-meta">Тема 04 · Custom</div>
+          <div class="theme-name">Network</div>
+        </div>
+        <div class="preview" style="background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.55)">network theme</div>
+        <div class="swatches">
+          <div class="sw" style="background: #1A202C; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15)"></div>
+          <div class="sw" style="background: #F6AD55"></div>
+          <div class="sw" style="background: #ED8936"></div>
+          <div class="sw" style="background: #fff"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Design system docs (Customizable colors) -->
+  <div class="block">
+    <div class="block-head">
+      <div>
+        <div class="eyebrow mb-32">Документация системы</div>
+        <div class="h3">Tokens-driven документация — каждый цвет именованный токен, а не magic number</div>
+      </div>
+    </div>
+    <div class="ds-docs">
+      <img src="./images/Customizable colors.png" alt="Документация дизайн-системы Blockscout — Light / Dark режимы и токены">
+    </div>
+  </div>
+
+  <!-- Palette -->
+  <div class="block">
+    <div class="block-head">
+      <div>
+        <div class="eyebrow mb-32">Цветовые токены</div>
+        <div class="h3">Базовые токены — примитивы, которые наследует каждая тема</div>
+      </div>
+    </div>
+    <div class="palette-strip">
+      <div class="swatch" style="background: #101112"><div class="swatch-label"><b>Ink</b>#101112</div></div>
+      <div class="swatch" style="background: #2B6CB0"><div class="swatch-label"><b>blue.600</b>#2B6CB0</div></div>
+      <div class="swatch" style="background: #3182CE"><div class="swatch-label"><b>blue.500</b>#3182CE</div></div>
+      <div class="swatch" style="background: #805AD5"><div class="swatch-label"><b>purple.500</b>#805AD5</div></div>
+      <div class="swatch light" style="background: #F7FAFC"><div class="swatch-label"><b>gray.50</b>#F7FAFC</div></div>
+      <div class="swatch" style="background: #718096"><div class="swatch-label"><b>gray.500</b>#718096</div></div>
+    </div>
+  </div>
+
+  <!-- Typography -->
+  <div class="block">
+    <div class="block-head">
+      <div>
+        <div class="eyebrow mb-32">Типографика</div>
+        <div class="h3">Poppins и Inter для интерфейса, JetBrains Mono для хешей и кода</div>
+      </div>
+    </div>
+    <div class="type-specimen">
+      <div class="type-row">
+        <div class="label"><div class="caption">Display · Poppins</div><div class="size">72 / 68 · 700</div></div>
+        <div class="sample display">0x4f...e2a1</div>
+      </div>
+      <div class="type-row">
+        <div class="label"><div class="caption">Heading · Poppins</div><div class="size">40 / 44 · 600</div></div>
+        <div class="sample h2s">Блок 19 482 015 подтверждён</div>
+      </div>
+      <div class="type-row">
+        <div class="label"><div class="caption">Body · Inter</div><div class="size">18 / 28 · 400</div></div>
+        <div class="sample body-s">Чёткая иерархия превращает плотные данные в историю, которую можно просканировать за секунды</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Flow -->
+  <div class="block">
+    <div class="block-head">
+      <div>
+        <div class="eyebrow mb-32">Основной флоу</div>
+        <div class="h3">От поиска до деталей транзакции — за два шага</div>
+      </div>
+    </div>
+    <div class="flow-grid">
+      <div class="flow-tile"><img src="./images/flow-01.png" alt="Шаг 1 — поиск транзакции"></div>
+      <div class="flow-tile"><img src="./images/flow-02.png" alt="Шаг 2 — детали транзакции"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 5 — RESULT ========== -->
+<section class="section result" id="s5-result">
+  <button class="export-btn" onclick="exportSection('s5-result','05-result')">Export PNG</button>
+
+  <div class="result-head">
+    <div class="eyebrow">05 / 05 · Результат</div>
+    <h2 class="h2 mt-40">Что изменилось<br>и что я забрала с собой</h2>
+  </div>
+
+  <!-- Metrics -->
+  <div class="metrics-row">
+    <div class="metric">
+      <div class="num"><span>3000</span><small>+</small></div>
+      <div class="label">Сетей используют Blockscout — рост со 100 до 3000+ за период 2024–2025</div>
+    </div>
+    <div class="metric">
+      <div class="num"><span>4</span><small> темы</small></div>
+      <div class="label">Бренд-темы на единой токен-системе — сети перебрендируются без кода</div>
+    </div>
+    <div class="metric">
+      <div class="num"><span>1</span><small> система</small></div>
+      <div class="label">Chakra-based библиотека, переиспользуется между микросервисами — UI выходит быстрее</div>
+    </div>
+  </div>
+
+  <!-- Testimonials -->
+  <div class="testimonials-block">
+    <div class="eyebrow">Голоса комьюнити</div>
+    <div class="testimonials-grid">
+      <div class="test-card">
+        <div class="quote">«Спасибо @Tatyana за гига чада, которым стал блокскаут.»</div>
+        <div class="who">— Igor Barinov, основатель Blockscout</div>
+      </div>
+      <div class="test-card">
+        <div class="quote">"Really easy to use, endpoints worked effortlessly and fast."</div>
+        <div class="who">— Отзыв с хакатона</div>
+      </div>
+      <div class="test-card">
+        <div class="quote">"Quick and easy to use. First time we'd used it and found it extremely intuitive."</div>
+        <div class="who">— Отзыв с хакатона</div>
+      </div>
+      <div class="test-card">
+        <div class="quote">"Thank you so much, guys, for this amazing project!"</div>
+        <div class="who">— Nada Jabr, комьюнити</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Insights -->
+  <div class="insights-grid">
+    <div class="insight">
+      <div class="num">ИНСАЙТ 01</div>
+      <h3>Смена аудитории — главный unlock</h3>
+      <p>Посреди проекта перешли с operator-first на user-first. Самая большая точка рычага — и система выдержала обе без форка.</p>
+    </div>
+    <div class="insight">
+      <div class="num">ИНСАЙТ 02</div>
+      <h3>Не строй то, что уже есть</h3>
+      <p>Chakra как база сэкономила месяцы. Дизайнерская работа — не сами компоненты, а токены и сценарии поверх них.</p>
+    </div>
+    <div class="insight">
+      <div class="num">ИНСАЙТ 03</div>
+      <h3>В open-source дизайн-система — это продукт</h3>
+      <p>Это не внутренний инструмент дизайнера — это фича, на которую опираются операторы сетей. Это изменило то, как я документирую каждый компонент.</p>
+    </div>
+  </div>
+
+  <!-- Reflection -->
+  <div class="takeaway">
+    <div class="eyebrow mb-32">Рефлексия</div>
+    <div class="h2" style="font-size: clamp(1.75rem, 3.2vw, 3rem); line-height: 1.1;">
+      Победа не в том, что догнали Etherscan —<br>а в том, что Blockscout стал собой, только современным
+    </div>
+    <p>
+      Бриф начинался с «выглядеть как стандарт». Закончился — «построить систему, которой у стандарта нет». Закрыть визуальный разрыв было просто. Настоящей работой было превратить один продукт в платформу, которую 1000+ сетей могли сделать своей.
+    </p>
+  </div>
+
+  <div class="footer-credit">
+    <div>Designed by Tatiana Gladilina · 2026</div>
+    <div><a href="https://www.instagram.com/tati_prodesign/" target="_blank" rel="noopener">@tati_prodesign</a></div>
+  </div>
+</section>
+
+</div>
+
+<script>
+async function exportSection(id, name) {
+  const el = document.getElementById(id);
+  const toolbar = document.getElementById('toolbar');
+  el.classList.add('exporting');
+  toolbar.classList.add('hidden');
+  try {
+    const canvas = await html2canvas(el, {
+      scale: 2,
+      backgroundColor: null,
+      useCORS: true,
+      logging: false,
+      windowWidth: 1600,
+      width: el.offsetWidth,
+      height: el.offsetHeight
+    });
+    const link = document.createElement('a');
+    link.download = name + '.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  } finally {
+    el.classList.remove('exporting');
+    toolbar.classList.remove('hidden');
+  }
+}
+
+async function exportAll() {
+  const sections = [
+    ['s1-hero','01-hero'],
+    ['s2-problem','02-problem'],
+    ['s3-process','03-process'],
+    ['s4-solution','04-solution'],
+    ['s5-result','05-result']
+  ];
+  for (const [id, name] of sections) {
+    await exportSection(id, name);
+    await new Promise(r => setTimeout(r, 500));
+  }
+}
+</script>
+</body>
+</html>
