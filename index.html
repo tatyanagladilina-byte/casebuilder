@@ -1,0 +1,1569 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>casebuilder — соберёшь Behance-кейс за 45 минут вместо 2 дней</title>
+<meta name="description" content="AI-интервьюер для дизайнеров: задаёт правильные вопросы по секциям кейса, собирает тексты в одном тоне и экспортирует готовые PNG под Behance. Не шаблон. Не редактор. Интервьюер.">
+<link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800,900|jetbrains-mono:400,500&display=swap&subset=cyrillic,cyrillic-ext,latin" rel="stylesheet">
+<style>
+  :root {
+    /* Colors — palette extracted from founder avatar:
+       coral (lips/skin highlight), turquoise (earring), sky blue (background) */
+    --bg:           #FFFFFF;
+    --ink:          #1A1614;                    /* warm near-black (matches dark hair tones) */
+    --ink-soft:     rgba(26,22,20,0.72);
+    --muted:        #786E68;                    /* warm neutral */
+    --line:         rgba(26,22,20,0.10);
+    --line-strong:  rgba(26,22,20,0.85);
+    --surface:      #EAF2F5;                    /* pale sky blue (avatar background) */
+    --surface-warm: #FBE3D5;                    /* warm peach (avatar skin tone) */
+    --accent:       #E16B5A;                    /* coral red (avatar lips) — primary accent */
+    --accent-soft:  rgba(225,107,90,0.10);
+    --accent-2:     #1FA8B8;                    /* turquoise (avatar earring) — secondary accent */
+    --accent-2-soft:rgba(31,168,184,0.12);
+
+    /* Type scale — 1.25 ratio from 16px base */
+    --t-12:  0.75rem;
+    --t-13:  0.8125rem;
+    --t-16:  1rem;
+    --t-20:  1.25rem;
+    --t-25:  1.5625rem;
+    --t-31:  1.95rem;
+    --t-39:  2.44rem;
+    --t-49:  3.05rem;
+    --t-61:  3.81rem;
+    --t-76:  4.77rem;
+
+    /* Display sizes (responsive clamps) */
+    --d-h1:  clamp(2.5rem, 5vw, 4.77rem);
+    --d-h2:  clamp(2rem, 3.6vw, 3.05rem);
+    --d-h3:  clamp(1.25rem, 1.6vw, 1.5625rem);
+
+    --display: 'Inter', system-ui, -apple-system, sans-serif;
+    --mono:    'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--ink); font-family: var(--display); -webkit-font-smoothing: antialiased; }
+  body { font-size: var(--t-16); line-height: 1.55; }
+  img { max-width: 100%; display: block; }
+  a { color: inherit; }
+  button { font: inherit; cursor: pointer; }
+
+  .stage { max-width: 1280px; margin: 0 auto; padding: 0 32px; }
+
+  /* ---------- Sticky Nav ---------- */
+  .nav-wrap {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: saturate(180%) blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav { display: flex; justify-content: space-between; align-items: center; padding: 18px 0; }
+  .logo { font-family: var(--display); font-weight: 800; font-size: var(--t-20); letter-spacing: -0.025em; }
+  .logo span { color: var(--accent); }
+  .nav-links { display: flex; gap: 28px; font-size: var(--t-13); }
+  .nav-links a { text-decoration: none; color: var(--muted); transition: color .15s; font-weight: 500; }
+  .nav-links a:hover { color: var(--ink); }
+  .nav .cta {
+    background: var(--ink); color: #fff;
+    padding: 10px 20px; border-radius: 0;
+    font-weight: 600; font-size: var(--t-13);
+    text-decoration: none; transition: background .15s;
+    letter-spacing: 0.01em;
+  }
+  .nav .cta:hover { background: var(--accent); }
+
+  /* ---------- Typography ---------- */
+  h1, h2, h3, h4 { font-family: var(--display); letter-spacing: -0.03em; line-height: 1.05; }
+  h1 i, h2 i, h3 i { font-style: italic; font-weight: 300; letter-spacing: -0.04em; }
+  h1 em, h2 em { font-style: normal; color: var(--accent); }
+  .eyebrow {
+    font-family: var(--mono); font-size: var(--t-12);
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted);
+  }
+
+  /* ---------- Hero ---------- */
+  .hero { padding: 80px 0 100px; border-bottom: 1px solid var(--line); }
+  .hero-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 64px; align-items: center; }
+  .hero h1 {
+    font-size: var(--d-h1);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    margin-top: 28px;
+  }
+  .hero h1 strike {
+    text-decoration: line-through;
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 5px;
+    color: #B8B8B8;
+    font-weight: 500;
+  }
+  .hero p.lead {
+    font-size: var(--t-20); color: var(--ink-soft);
+    max-width: 480px; margin-top: 28px; line-height: 1.45;
+  }
+  .hero-cta { margin-top: 36px; }
+  .btn-primary {
+    background: var(--ink); color: #fff;
+    padding: 18px 32px; border: none; font-weight: 600; font-size: var(--t-16);
+    text-decoration: none; display: inline-block;
+    transition: background .15s, transform .15s;
+    letter-spacing: 0.005em;
+  }
+  .btn-primary:hover { background: var(--accent); transform: translateY(-1px); }
+  .btn-primary.big { padding: 22px 40px; font-size: var(--t-20); }
+
+  .hero-proof {
+    margin-top: 28px; display: inline-flex; align-items: center; gap: 12px;
+    font-family: var(--mono); font-size: var(--t-12);
+    letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);
+  }
+  .hero-proof strong { color: var(--ink); font-weight: 700; }
+  .proof-dot {
+    width: 8px; height: 8px; background: var(--accent-2); border-radius: 50%;
+    box-shadow: 0 0 0 4px rgba(31,168,184,0.20);
+    animation: pulseDot 2s infinite;
+  }
+  @keyframes pulseDot {
+    0%, 100% { box-shadow: 0 0 0 4px rgba(31,168,184,0.20); }
+    50% { box-shadow: 0 0 0 7px rgba(31,168,184,0.0); }
+  }
+
+  /* ---------- Hero Visual: Mock Behance Case ---------- */
+  .hero-visual { position: relative; }
+  .case-mock {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    box-shadow: 0 30px 60px -20px rgba(10,10,10,0.18), 0 8px 18px -8px rgba(10,10,10,0.10);
+    overflow: hidden;
+    transform: rotate(-1.2deg);
+    transition: transform .3s ease;
+  }
+  .case-mock:hover { transform: rotate(0); }
+  .case-mock-bar {
+    background: var(--surface);
+    padding: 10px 14px;
+    display: flex; align-items: center; gap: 6px;
+    border-bottom: 1px solid var(--line);
+  }
+  .case-mock-bar > span:not(.case-mock-url) {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: rgba(10,10,10,0.18);
+  }
+  .case-mock-bar > span:nth-child(1) { background: #FF6058; }
+  .case-mock-bar > span:nth-child(2) { background: #FFC131; }
+  .case-mock-bar > span:nth-child(3) { background: #2BCB44; }
+  .case-mock-url {
+    margin-left: 12px; font-family: var(--mono); font-size: 10px;
+    color: var(--muted); letter-spacing: 0.04em;
+  }
+  .case-mock-body { background: var(--surface-warm); padding: 36px 32px 28px; }
+  .cm-eyebrow {
+    font-family: var(--mono); font-size: 9px; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 12px;
+  }
+  .cm-title {
+    font-size: clamp(1.5rem, 2.2vw, 2.2rem); font-weight: 800; line-height: 0.95;
+    letter-spacing: -0.035em;
+  }
+  .cm-title em { font-style: italic; font-weight: 300; color: var(--ink); }
+  .cm-grid {
+    margin-top: 28px;
+    display: grid; grid-template-columns: 1fr 1.4fr 1fr; gap: 8px;
+    height: 130px;
+  }
+  .cm-block { background: var(--ink); opacity: 0.85; }
+  .cm-block.tall { background: var(--accent); opacity: 1; }
+  .cm-block:nth-child(3) { background: #fff; opacity: 1; border: 1px solid var(--line); }
+  .cm-meta {
+    margin-top: 24px; padding-top: 16px;
+    border-top: 1px solid rgba(10,10,10,0.15);
+    display: flex; gap: 18px; flex-wrap: wrap;
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .case-mock-tag {
+    position: absolute; bottom: -22px; right: 18px;
+    background: var(--accent); color: #fff;
+    padding: 14px 22px;
+    transform: rotate(-3deg);
+    box-shadow: 0 14px 28px -8px rgba(228,41,29,0.45);
+  }
+  .case-mock-tag span { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.85; display: block; margin-bottom: 2px; }
+  .case-mock-tag strong { font-size: var(--t-25); font-weight: 800; letter-spacing: -0.02em; line-height: 1; }
+
+  /* ---------- Logo / Proof Strip ---------- */
+  .strip {
+    background: var(--ink); color: rgba(255,255,255,0.85);
+    padding: 28px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .strip-grid { display: flex; align-items: center; gap: 48px; flex-wrap: wrap; }
+  .strip-label {
+    font-family: var(--mono); font-size: var(--t-12);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: rgba(255,255,255,0.55);
+  }
+  .strip-items {
+    display: flex; gap: 28px; flex-wrap: wrap; flex: 1;
+    font-family: var(--display); font-weight: 600; font-size: var(--t-16);
+    letter-spacing: -0.01em;
+  }
+  .strip-item { display: inline-flex; align-items: center; gap: 10px; }
+  .strip-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.16);
+    color: #fff;
+  }
+  .strip-icon svg { width: 14px; height: 14px; display: block; }
+
+  /* ---------- Sections (shared) ---------- */
+  section { padding: 120px 0; border-bottom: 1px solid var(--line); }
+  /* 12-column conceptual grid: heading takes 6 cols, support text takes 5 cols, 1 col gutter */
+  .section-head {
+    margin-bottom: 64px;
+    display: grid; grid-template-columns: 6fr 1fr 5fr;
+    gap: 0;
+    align-items: start;
+  }
+  .section-head h2 { font-size: var(--d-h2); line-height: 0.98; font-weight: 700; letter-spacing: -0.035em; grid-column: 1; }
+  .section-head p {
+    grid-column: 3;
+    color: var(--ink-soft); font-size: var(--t-20); max-width: 480px;
+    line-height: 1.5; padding-top: 12px;
+  }
+
+  /* ---------- Transformation: Before/After ---------- */
+  .transformation { background: var(--surface); }
+  .t-split {
+    display: grid; grid-template-columns: 1fr auto 1fr;
+    gap: 32px; align-items: stretch;
+  }
+  .t-side {
+    background: var(--bg); padding: 36px 32px;
+    border: 1px solid var(--line);
+    display: flex; flex-direction: column;
+  }
+  .t-side.t-after { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .t-tag {
+    display: inline-block;
+    font-family: var(--mono); font-size: var(--t-12);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 24px;
+    padding: 4px 0; border-bottom: 1px solid var(--line); align-self: flex-start;
+  }
+  .t-tag.accent { color: var(--accent); border-bottom-color: var(--accent); }
+  .t-stack { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .t-tab {
+    background: var(--surface);
+    padding: 12px 16px;
+    font-family: var(--mono); font-size: var(--t-13);
+    color: var(--ink-soft);
+    border-left: 3px solid var(--line-strong);
+    transform: translateX(0);
+    animation: tabJitter 4s infinite;
+  }
+  .t-tab:nth-child(2) { animation-delay: 0.5s; transform: translateX(8px); }
+  .t-tab:nth-child(3) { animation-delay: 1s; transform: translateX(-4px); }
+  .t-tab:nth-child(4) { animation-delay: 1.5s; transform: translateX(12px); }
+  .t-tab:nth-child(5) { animation-delay: 2s; transform: translateX(-8px); }
+  .t-tab:nth-child(6) { animation-delay: 2.5s; transform: translateX(6px); }
+  .t-tab:nth-child(7) { animation-delay: 3s; transform: translateX(-2px); }
+  @keyframes tabJitter {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(6px); }
+  }
+  .t-stack.clean { gap: 12px; }
+  .t-step {
+    background: rgba(255,255,255,0.06);
+    padding: 16px 18px;
+    font-family: var(--display); font-weight: 600; font-size: var(--t-16);
+    border-left: 3px solid var(--accent);
+    color: #fff;
+  }
+  .t-time {
+    margin-top: 28px; padding-top: 20px;
+    border-top: 1px solid var(--line);
+    font-family: var(--display); font-weight: 800; font-size: var(--t-31);
+    letter-spacing: -0.03em;
+    color: var(--muted);
+  }
+  .t-side.t-after .t-time { border-top-color: rgba(255,255,255,0.15); }
+  .t-time.accent { color: var(--accent); }
+  .t-arrow {
+    font-size: var(--t-49); font-weight: 300; color: var(--muted);
+    align-self: center; line-height: 1;
+  }
+
+  /* ---------- Live Examples ---------- */
+  .examples-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+  .example-card {
+    text-decoration: none;
+    display: flex; flex-direction: column;
+    transition: transform .25s ease;
+  }
+  .example-card:hover { transform: translateY(-4px); }
+  .ex-thumb {
+    aspect-ratio: 4/5;
+    overflow: hidden;
+    position: relative;
+    padding: 36px 32px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    border: 1px solid var(--line);
+  }
+  .ex-thumb.classic { background: var(--surface-warm); }
+  .ex-thumb.editorial { background: var(--ink); color: #fff; }
+  .ex-eyebrow {
+    font-family: var(--mono); font-size: var(--t-12);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 20px;
+  }
+  .ex-thumb.editorial .ex-eyebrow { color: var(--accent); }
+  .ex-title {
+    font-size: clamp(1.75rem, 2.6vw, 2.6rem);
+    font-weight: 800; line-height: 0.95;
+    letter-spacing: -0.035em;
+  }
+  .ex-tags {
+    display: flex; gap: 16px; flex-wrap: wrap;
+    font-family: var(--mono); font-size: var(--t-12);
+    letter-spacing: 0.06em; text-transform: uppercase;
+    opacity: 0.7;
+  }
+  /* Schematic case-page stack inside skin cards */
+  .ex-pages {
+    flex: 1;
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+    margin: 12px 0;
+    min-height: 220px;
+  }
+  .ex-page {
+    position: absolute;
+    width: 56%;
+    aspect-ratio: 3/4;
+    background: var(--bg);
+    border: 1px solid rgba(26,22,20,0.18);
+    box-shadow: 0 14px 28px -10px rgba(0,0,0,0.30);
+    display: flex; flex-direction: column;
+    padding: 14px 12px; gap: 6px;
+  }
+  /* Classic — rounded corners, fan to right with positive rotation */
+  .ex-thumb.classic .ex-page { border-radius: 8px; }
+  .ex-thumb.classic .ex-page-bg3 { transform: translate(40px, -28px) rotate(7deg); opacity: 0.45; z-index: 1; }
+  .ex-thumb.classic .ex-page-bg2 { transform: translate(22px, -16px) rotate(4deg); opacity: 0.65; z-index: 2; }
+  .ex-thumb.classic .ex-page-bg1 { transform: translate(8px, -8px) rotate(1.5deg); opacity: 0.85; z-index: 3; }
+  .ex-thumb.classic .ex-page-front { z-index: 4; transform: translate(-12px, 4px) rotate(-1deg); }
+  /* Editorial — sharp corners, fan to left with negative rotation */
+  .ex-thumb.editorial .ex-page { border-radius: 0; }
+  .ex-thumb.editorial .ex-page-bg3 { transform: translate(-40px, -28px) rotate(-7deg); opacity: 0.45; z-index: 1; }
+  .ex-thumb.editorial .ex-page-bg2 { transform: translate(-22px, -16px) rotate(-4deg); opacity: 0.65; z-index: 2; }
+  .ex-thumb.editorial .ex-page-bg1 { transform: translate(-8px, -8px) rotate(-1.5deg); opacity: 0.85; z-index: 3; }
+  .ex-thumb.editorial .ex-page-front { z-index: 4; transform: translate(12px, 4px) rotate(1deg); }
+
+  /* Page content (front page) */
+  .ep-eyebrow {
+    font-family: var(--mono); font-size: 7px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--accent); font-weight: 700;
+  }
+  .ep-title {
+    font-weight: 800; font-size: 16px; line-height: 0.95; color: var(--ink);
+    letter-spacing: -0.025em; margin-top: 2px;
+  }
+  .ep-title em { font-style: italic; font-weight: 300; }
+  .ep-blocks {
+    display: grid; grid-template-columns: 1fr 1.5fr 1fr; gap: 4px;
+    height: 42px; margin-top: 6px;
+  }
+  .ep-blocks > div { background: var(--ink); opacity: 0.18; }
+  .ep-blocks > div:nth-child(2) { background: var(--accent); opacity: 1; }
+  .ep-blocks > div:nth-child(3) { background: var(--accent-2); opacity: 0.85; }
+  .ex-thumb.editorial .ep-blocks { grid-template-columns: 1fr 2fr; }
+  .ep-text {
+    display: flex; flex-direction: column; gap: 3px; margin-top: 6px;
+  }
+  .ep-text span {
+    display: block; height: 3px; background: var(--ink); opacity: 0.15;
+  }
+  .ep-text span:last-child { width: 55%; }
+  .ep-meta {
+    margin-top: auto; padding-top: 6px;
+    border-top: 1px solid rgba(26,22,20,0.1);
+    font-family: var(--mono); font-size: 6px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--muted);
+    display: flex; gap: 8px;
+  }
+  /* Page-count indicator */
+  .ex-page-count {
+    position: absolute; bottom: 0; right: 4px; z-index: 10;
+    font-family: var(--mono); font-size: 9px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--ink); opacity: 0.65;
+  }
+  .ex-thumb.editorial .ex-page-count { color: rgba(255,255,255,0.7); }
+
+  .ex-info {
+    padding: 20px 0 4px;
+    display: flex; justify-content: space-between; align-items: center; gap: 24px;
+    border-top: 1px solid var(--line); margin-top: 16px;
+  }
+  .ex-skin {
+    font-family: var(--mono); font-size: var(--t-12);
+    letter-spacing: 0.06em;
+    color: var(--muted); text-transform: lowercase;
+  }
+  .ex-arrow {
+    font-family: var(--mono); font-size: var(--t-13);
+    color: var(--accent); font-weight: 600;
+    letter-spacing: 0.02em; white-space: nowrap;
+  }
+
+  /* ---------- How it works ---------- */
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; background: var(--ink); border: 1px solid var(--ink); }
+  .step { background: var(--bg); padding: 36px 28px; display: flex; flex-direction: column; gap: 14px; min-height: 440px; }
+  .step-num { font-family: var(--mono); font-size: var(--t-12); color: var(--accent); letter-spacing: 0.1em; }
+  .step h3 { font-size: var(--d-h3); font-weight: 700; line-height: 1.15; letter-spacing: -0.02em; }
+  .step p { color: var(--muted); font-size: var(--t-16); line-height: 1.55; }
+
+  /* Embedded visual inside each step card */
+  .step-visual {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 22px 18px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+    min-height: 130px;
+  }
+  .step-visual.dark { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+  /* 01 — Upload visual */
+  .sv-input { display: flex; gap: 6px; align-items: flex-end; }
+  .sv-input-thumb { width: 32px; height: 42px; background: var(--ink); opacity: 0.32; }
+  .sv-input-thumb:nth-child(2) { opacity: 0.55; height: 46px; }
+  .sv-input-thumb:nth-child(3) { opacity: 0.85; height: 40px; }
+
+  /* 02 — Interview visual (dark) */
+  .sv-sections {
+    display: flex; flex-direction: column; gap: 0;
+    width: 100%; max-width: 220px;
+  }
+  .sv-section {
+    display: flex; gap: 10px; align-items: center;
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: rgba(255,255,255,0.75);
+    padding: 6px 0; border-bottom: 1px dashed rgba(255,255,255,0.14);
+  }
+  .sv-section:last-child { border-bottom: none; }
+  .sv-section-num { color: var(--accent); font-weight: 700; min-width: 16px; }
+
+  /* 03 — Export visual */
+  .sv-output { display: flex; gap: 4px; align-items: center; }
+  .sv-png {
+    width: 22px; height: 28px; background: var(--bg); border: 1px solid var(--line);
+    font-family: var(--mono); font-size: 8px;
+    display: flex; align-items: flex-end; justify-content: center;
+    padding-bottom: 2px; color: var(--muted);
+  }
+
+  .step-mini {
+    margin-top: auto; padding-top: 20px;
+    border-top: 1px solid var(--line);
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--ink-soft);
+    display: flex; gap: 14px; align-items: center;
+  }
+  .step-mini-dot { width: 6px; height: 6px; background: var(--accent); }
+
+  /* ---------- Differentiator (with proof) ---------- */
+  .diff { background: var(--ink); color: #fff; }
+  .diff h2 { font-size: clamp(2.5rem, 4vw, 3.81rem); line-height: 0.95; font-weight: 700; letter-spacing: -0.035em; color: #fff; margin-bottom: 56px; }
+  .diff h2 .accent-red { color: var(--accent); }
+  .diff-features {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .diff-feat {
+    background: var(--ink); padding: 36px 32px;
+    display: flex; flex-direction: column; gap: 20px;
+  }
+  .diff-feat h4 {
+    font-size: var(--t-25); font-weight: 700; line-height: 1.15;
+    letter-spacing: -0.025em; color: #fff;
+  }
+  .diff-feat p { color: rgba(255,255,255,0.65); font-size: var(--t-16); line-height: 1.55; }
+  .diff-mini {
+    background: rgba(255,255,255,0.04);
+    border: 1px dashed rgba(255,255,255,0.14);
+    padding: 18px;
+    min-height: 110px;
+    display: flex; flex-direction: column; gap: 8px; justify-content: center;
+  }
+  .dm-msg {
+    background: rgba(255,255,255,0.92); color: var(--ink);
+    padding: 8px 12px;
+    font-size: var(--t-13); line-height: 1.4;
+    align-self: flex-start; max-width: 88%;
+    font-family: var(--display);
+  }
+  .dm-msg.user {
+    background: var(--ink); color: #fff;
+    border: 1px solid rgba(255,255,255,0.3);
+    align-self: flex-end;
+  }
+  .dm-page { display: flex; flex-direction: column; gap: 6px; }
+  .dm-line { height: 6px; background: rgba(255,255,255,0.5); }
+  .dm-line.short { width: 60%; }
+  .dm-pngs { display: flex; gap: 4px; justify-content: center; }
+  .dm-png {
+    width: 28px; height: 36px; background: #fff;
+    color: var(--muted); font-family: var(--mono); font-size: 8px;
+    display: flex; align-items: flex-end; justify-content: center;
+    padding-bottom: 3px; letter-spacing: 0.04em;
+  }
+  .dm-figma { display: flex; align-items: center; gap: 12px; padding: 4px; }
+  .dm-figma-icon {
+    width: 28px; height: 28px; background: var(--accent); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: var(--t-13);
+  }
+  .dm-figma-text {
+    font-family: var(--mono); font-size: var(--t-13);
+    color: rgba(255,255,255,0.7);
+  }
+  .dm-figma-text::after {
+    content: ""; display: inline-block;
+    width: 4px; height: 4px; background: var(--accent);
+    border-radius: 50%; margin-left: 4px;
+    animation: dotBounce 1s infinite;
+  }
+  @keyframes dotBounce {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+  }
+
+  /* ---------- Comparison Table ---------- */
+  .compare-table {
+    border: 1px solid var(--line);
+    background: var(--bg);
+  }
+  .ct-row {
+    display: grid;
+    grid-template-columns: 1.6fr repeat(5, 1fr);
+    border-bottom: 1px solid var(--line);
+  }
+  .ct-row:last-child { border-bottom: none; }
+  .ct-row > div {
+    padding: 18px 16px;
+    font-size: var(--t-16);
+    border-right: 1px solid var(--line);
+    display: flex; align-items: center;
+  }
+  .ct-row > div:last-child { border-right: none; }
+  .ct-row.ct-head {
+    background: var(--surface);
+    border-bottom: 2px solid var(--ink);
+  }
+  .ct-row.ct-head > div {
+    font-family: var(--mono); font-size: var(--t-12);
+    letter-spacing: 0.08em; text-transform: uppercase;
+    font-weight: 600; color: var(--ink);
+  }
+  .ct-feature { font-weight: 600; background: var(--surface); }
+  .ct-us {
+    background: var(--ink); color: #fff;
+    font-weight: 700;
+  }
+  .ct-row.ct-head .ct-us { background: var(--accent); color: #fff; }
+
+  /* ---------- Founder ---------- */
+  .founder { background: var(--surface); }
+  .founder-grid { display: grid; grid-template-columns: 360px 1fr; gap: 64px; align-items: start; }
+  .founder-photo {
+    aspect-ratio: 4/5;
+    background: var(--surface-warm);
+    overflow: hidden;
+    position: relative;
+  }
+  .founder-photo img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+    filter: saturate(1.05);
+  }
+  .founder-text h3 {
+    font-size: var(--t-31); font-weight: 700; letter-spacing: -0.025em;
+    margin-top: 16px; margin-bottom: 24px; line-height: 1.15;
+  }
+  .founder-text p {
+    color: var(--ink-soft); font-size: var(--t-16); line-height: 1.65;
+    margin-bottom: 16px; max-width: 620px;
+  }
+  .founder-links { display: flex; gap: 28px; margin-top: 32px; flex-wrap: wrap; }
+  .link-arrow {
+    color: var(--ink); text-decoration: none; font-weight: 600; font-size: var(--t-13);
+    border-bottom: 1px solid var(--ink); padding-bottom: 4px;
+    transition: color .15s, border-color .15s;
+  }
+  .link-arrow:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ---------- Testimonials ---------- */
+  .testimonials-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .testimonial {
+    background: var(--bg); border: 1px solid var(--line);
+    padding: 32px 28px;
+    display: flex; flex-direction: column; gap: 20px;
+    min-height: 240px;
+  }
+  .t-quote {
+    font-size: var(--t-20); line-height: 1.4;
+    font-weight: 500; letter-spacing: -0.015em;
+    flex: 1;
+  }
+  .t-quote::before { content: "«"; color: var(--accent); margin-right: 2px; font-weight: 700; }
+  .t-quote::after { content: "»"; color: var(--accent); margin-left: 2px; font-weight: 700; }
+  .t-author { padding-top: 16px; border-top: 1px solid var(--line); }
+  .t-author-name { font-weight: 700; font-size: var(--t-13); margin-bottom: 4px; }
+  .t-author-role { font-family: var(--mono); font-size: var(--t-12); color: var(--muted); letter-spacing: 0.05em; }
+  .testimonial.coming { background: var(--surface); border-style: dashed; border-color: var(--muted); justify-content: space-between; }
+  .testimonial.coming .t-quote { color: var(--muted); font-style: italic; }
+  .testimonial.coming .t-quote::before, .testimonial.coming .t-quote::after { display: none; }
+  .t-link {
+    color: var(--accent); font-weight: 700; text-decoration: none;
+    font-family: var(--mono); font-size: var(--t-13); letter-spacing: 0.04em;
+  }
+
+  /* ---------- Pricing ---------- */
+  .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; background: var(--ink); border: 1px solid var(--ink); }
+  .price-card { background: var(--bg); padding: 48px 32px; display: flex; flex-direction: column; gap: 20px; min-height: 520px; position: relative; }
+  .price-card.featured { background: var(--ink); color: #fff; }
+  .price-card.featured .price-muted { color: rgba(255,255,255,0.55); }
+  .price-card.featured ul li { color: rgba(255,255,255,0.85); }
+  .price-card.featured ul li::before { background: var(--accent); }
+  .price-card.featured .btn-primary { background: var(--accent); }
+  .price-card.featured .btn-primary:hover { background: #fff; color: var(--ink); }
+  .price-card .badge {
+    position: absolute; top: 0; right: 0;
+    background: var(--accent); color: #fff;
+    padding: 7px 14px; font-family: var(--mono); font-size: var(--t-12);
+    letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .price-name { font-size: var(--t-20); font-weight: 700; letter-spacing: -0.015em; }
+  .price-amount { font-size: var(--t-49); font-weight: 800; letter-spacing: -0.035em; line-height: 1; }
+  .price-amount small { font-weight: 500; font-size: var(--t-13); color: var(--muted); margin-left: 8px; letter-spacing: 0; }
+  .price-card.featured .price-amount small { color: rgba(255,255,255,0.5); }
+  .price-muted { color: var(--muted); font-size: var(--t-13); line-height: 1.5; }
+  .price-card ul { list-style: none; flex: 1; display: grid; gap: 10px; padding: 8px 0; }
+  .price-card ul li { font-size: var(--t-13); padding-left: 20px; position: relative; line-height: 1.45; }
+  .price-card ul li::before { content: ""; position: absolute; left: 0; top: 6px; width: 8px; height: 8px; background: var(--ink); }
+  .price-card .btn-primary { width: 100%; text-align: center; margin-top: auto; }
+
+  /* Scarcity bar */
+  .scarcity {
+    background: var(--accent-soft); border-left: 3px solid var(--accent);
+    padding: 12px 14px;
+    margin-bottom: 8px;
+  }
+  .scarcity-text { font-family: var(--mono); font-size: var(--t-12); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink); margin-bottom: 8px; }
+  .scarcity-text strong { color: var(--accent); font-weight: 700; }
+  .scarcity-bar { height: 6px; background: rgba(228,41,29,0.18); position: relative; overflow: hidden; }
+  .scarcity-fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); width: 23.5%; }
+
+  /* ---------- Final CTA ---------- */
+  .final-cta {
+    background: var(--accent); color: #fff;
+    text-align: center; padding: 120px 0;
+  }
+  .final-cta h2 {
+    font-size: clamp(2.5rem, 5vw, 4.5rem); line-height: 0.96;
+    font-weight: 800; letter-spacing: -0.04em; color: #fff;
+    max-width: 900px; margin: 0 auto;
+  }
+  .final-cta h2 i { font-style: italic; font-weight: 300; }
+  .final-cta .btn-primary { margin-top: 40px; background: #fff; color: var(--ink); padding: 22px 44px; font-size: var(--t-20); }
+  .final-cta .btn-primary:hover { background: var(--ink); color: #fff; }
+  .final-cta .hero-proof { color: rgba(255,255,255,0.85); margin-top: 24px; }
+  .final-cta .hero-proof strong { color: #fff; }
+  .final-cta .proof-dot { background: #fff; box-shadow: 0 0 0 4px rgba(255,255,255,0.2); }
+  @keyframes pulseDotWhite {
+    0%, 100% { box-shadow: 0 0 0 4px rgba(255,255,255,0.2); }
+    50% { box-shadow: 0 0 0 7px rgba(255,255,255,0); }
+  }
+  .final-cta .proof-dot { animation: pulseDotWhite 2s infinite; }
+
+  /* ---------- Waitlist (form) ---------- */
+  .waitlist-form { display: flex; gap: 0; max-width: 540px; margin: 32px auto 0; border: 2px solid #fff; transition: opacity .25s ease; }
+  .waitlist-form input {
+    flex: 1; background: transparent; border: none;
+    padding: 18px 20px; color: #fff;
+    font-family: var(--display); font-size: var(--t-16);
+    outline: none;
+  }
+  .waitlist-form input::placeholder { color: rgba(255,255,255,0.6); }
+  .waitlist-form button {
+    background: #fff; color: var(--accent); border: none;
+    padding: 0 28px; font-weight: 700; letter-spacing: 0.02em;
+    transition: background .15s, color .15s;
+  }
+  .waitlist-form button:hover { background: var(--ink); color: #fff; }
+  .waitlist-form.is-loading { opacity: 0.5; pointer-events: none; }
+  .waitlist-form.is-hidden { display: none; }
+
+  .form-success {
+    display: none;
+    max-width: 540px; margin: 32px auto 0;
+    padding: 32px 28px;
+    border: 2px solid #fff;
+    text-align: center; color: #fff;
+    background: rgba(255,255,255,0.06);
+  }
+  .form-success.show { display: block; animation: fadeInUp 0.4s ease; }
+  .form-success .fs-icon {
+    width: 44px; height: 44px; margin: 0 auto 16px;
+    border: 2px solid #fff; display: flex; align-items: center; justify-content: center;
+    font-size: var(--t-25); font-weight: 700;
+  }
+  .form-success strong {
+    display: block; font-weight: 700; font-size: var(--t-25);
+    margin-bottom: 10px; letter-spacing: -0.02em;
+  }
+  .form-success p {
+    font-size: var(--t-16); color: rgba(255,255,255,0.85); line-height: 1.5;
+    max-width: 380px; margin: 0 auto;
+  }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .form-error {
+    display: none; max-width: 540px; margin: 16px auto 0;
+    padding: 12px 16px; background: rgba(0,0,0,0.25); color: #fff;
+    font-size: var(--t-13); text-align: center;
+  }
+  .form-error.show { display: block; }
+
+  /* ---------- FAQ ---------- */
+  .faq { padding: 120px 0; }
+  .faq-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 80px; align-items: start; }
+  .faq-grid h2 { font-size: var(--d-h2); line-height: 0.95; font-weight: 700; letter-spacing: -0.035em; }
+  .faq-list { display: flex; flex-direction: column; }
+  .faq-item {
+    padding: 24px 0;
+    border-bottom: 1px solid var(--line-strong);
+  }
+  .faq-item:first-child { border-top: 1px solid var(--line-strong); }
+  .faq-item summary {
+    font-weight: 700; font-size: var(--t-20); cursor: pointer;
+    list-style: none; display: flex; justify-content: space-between;
+    align-items: center; gap: 16px;
+    letter-spacing: -0.01em;
+  }
+  .faq-item summary::-webkit-details-marker { display: none; }
+  .faq-item summary::after {
+    content: "+"; color: var(--ink); font-weight: 300;
+    font-size: 1.6rem; line-height: 1;
+  }
+  .faq-item[open] summary::after { content: "−"; }
+  .faq-item p { color: var(--ink-soft); font-size: var(--t-16); line-height: 1.65; margin-top: 16px; max-width: 720px; }
+
+  /* ---------- Footer ---------- */
+  .footer {
+    background: var(--ink); color: rgba(255,255,255,0.6);
+    padding: 64px 0 32px;
+  }
+  .footer-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 48px; margin-bottom: 48px; }
+  .footer-col h5 {
+    font-family: var(--mono); font-size: var(--t-12);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: rgba(255,255,255,0.6); margin-bottom: 16px; font-weight: 500;
+  }
+  .footer-col a {
+    color: rgba(255,255,255,0.85); text-decoration: none;
+    display: block; padding: 6px 0; font-size: var(--t-13);
+    transition: color .15s;
+  }
+  .footer-col a:hover { color: var(--accent); }
+  .footer-logo { color: #fff; font-family: var(--display); font-weight: 800; font-size: var(--t-25); letter-spacing: -0.025em; margin-bottom: 16px; }
+  .footer-logo span { color: var(--accent); }
+  .footer-tagline { color: rgba(255,255,255,0.55); font-size: var(--t-13); line-height: 1.55; max-width: 280px; }
+  .footer-bottom {
+    padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.1);
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;
+    font-family: var(--mono); font-size: var(--t-12);
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+  }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 960px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 56px; }
+    .case-mock { transform: rotate(0); }
+    .case-mock-tag { right: auto; left: 50%; transform: translateX(-50%) rotate(-3deg); }
+    .section-head { grid-template-columns: 1fr; gap: 24px; }
+    .strip-grid { gap: 24px; }
+    .t-split { grid-template-columns: 1fr; }
+    .t-arrow { transform: rotate(90deg); padding: 16px 0; }
+    .examples-grid, .testimonials-grid, .steps, .pricing-grid, .diff-features, .footer-grid { grid-template-columns: 1fr; }
+    .ct-row { grid-template-columns: 1fr; }
+    .ct-row > div { border-right: none; border-bottom: 1px solid var(--line); }
+    .ct-row.ct-head { display: none; }
+    .ct-row > .ct-feature::after { content: " ↓"; opacity: 0.4; }
+    .founder-grid { grid-template-columns: 1fr; gap: 32px; }
+    .faq-grid { grid-template-columns: 1fr; gap: 32px; }
+    .nav-links { display: none; }
+    section { padding: 72px 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ STICKY NAV ============ -->
+<div class="nav-wrap">
+  <div class="stage">
+    <nav class="nav">
+      <div class="logo">case<span>builder</span></div>
+      <div class="nav-links">
+        <a href="#examples">Examples</a>
+        <a href="#how">How it works</a>
+        <a href="#compare">vs альтернативы</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#faq">FAQ</a>
+      </div>
+      <a href="#waitlist" class="cta">Get early access →</a>
+    </nav>
+  </div>
+</div>
+
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <div class="stage">
+    <div class="hero-grid">
+      <div class="hero-text">
+        <div class="eyebrow">→ Early access · Spring 2026</div>
+        <h1>
+          <strike>Ещё один</strike> portfolio<br>
+          builder? <i>Нет.</i><br>
+          <em>AI собирает</em><br>
+          твой кейс <i>за тебя</i>
+        </h1>
+        <p class="lead">
+          Расскажи о проекте голосом или текстом. AI задаст правильные вопросы по секциям — соберёт тексты, расставит картинки и выдаст готовые PNG под Behance.
+        </p>
+        <div class="hero-cta">
+          <a href="#waitlist" class="btn-primary">Получить ранний доступ →</a>
+        </div>
+        <div class="hero-proof">
+          <span class="proof-dot"></span>
+          <span><strong>247 designers</strong> · открываем доступ волнами</span>
+        </div>
+      </div>
+
+      <!-- Hero visual: Mock finished Behance case (RESULT, not process) -->
+      <div class="hero-visual">
+        <div class="case-mock">
+          <div class="case-mock-bar">
+            <span></span><span></span><span></span>
+            <span class="case-mock-url">behance.net/blockscout-redesign</span>
+          </div>
+          <div class="case-mock-body">
+            <div class="cm-eyebrow">CASE · 01 / 05</div>
+            <div class="cm-title">Blockscout<br><em>Redesign 2024</em></div>
+            <div class="cm-grid">
+              <div class="cm-block"></div>
+              <div class="cm-block tall"></div>
+              <div class="cm-block"></div>
+            </div>
+            <div class="cm-meta">
+              <span>3000+ networks</span>
+              <span>2024 — 2025</span>
+              <span>Tati G.</span>
+            </div>
+          </div>
+        </div>
+        <div class="case-mock-tag">
+          <span>Сделано за</span>
+          <strong>45 минут</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PROOF STRIP ============ -->
+<div class="strip">
+  <div class="stage">
+    <div class="strip-grid">
+      <div class="strip-label">Designers ship cases to:</div>
+      <div class="strip-items">
+        <span class="strip-item">
+          <span class="strip-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7.4 5.5c1 0 1.9.1 2.7.3.7.2 1.4.5 1.9.9.5.4.9.9 1.2 1.5.3.6.4 1.4.4 2.2 0 .9-.2 1.7-.6 2.3-.4.6-1 1.1-1.8 1.5 1.1.3 1.9.9 2.5 1.7.5.8.8 1.7.8 2.8 0 .9-.2 1.6-.5 2.3-.3.6-.8 1.2-1.4 1.6-.6.4-1.2.7-2 .9-.7.2-1.5.3-2.3.3H1V5.5h6.4M7 9.7c.7 0 1.3-.2 1.8-.5.5-.4.7-.9.7-1.7 0-.4-.1-.7-.2-1-.2-.3-.4-.5-.6-.6-.3-.2-.6-.3-.9-.3-.4-.1-.7-.1-1-.1H4v4.2h3M7.2 16.7c.4 0 .8 0 1.1-.1.4-.1.7-.2 1-.4.3-.2.5-.4.7-.7.2-.3.3-.7.3-1.1 0-.9-.3-1.6-.8-2-.5-.4-1.2-.6-2.1-.6H4v4.9h3.2M16.4 16.5c.4.4 1 .7 1.8.7.5 0 1-.1 1.4-.4.4-.3.6-.6.7-.9h2.4c-.4 1.2-1 2-1.8 2.6-.8.5-1.7.8-2.8.8-.8 0-1.5-.1-2.1-.4-.6-.2-1.1-.6-1.6-1-.4-.5-.8-1-1-1.7-.2-.6-.3-1.4-.3-2.1 0-.7.1-1.5.4-2.1.3-.6.6-1.2 1.1-1.7.4-.5 1-.8 1.6-1.1.6-.3 1.3-.4 2-.4.8 0 1.5.2 2.1.5.6.3 1.1.7 1.5 1.3.4.5.7 1.1.9 1.8.2.7.2 1.4.2 2.2h-7.2c0 .8.3 1.5.7 1.9m3.1-5.2c-.3-.4-.9-.6-1.6-.6-.5 0-.8.1-1.1.3-.3.2-.5.3-.7.6-.2.2-.3.5-.3.7-.1.3-.1.5-.1.7h4.5c-.1-.7-.4-1.3-.7-1.7M15.6 6h5.5v1.4h-5.5V6Z"/></svg></span>
+          Behance
+        </span>
+        <span class="strip-item">
+          <span class="strip-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M8.5 2.5c3 4 5 9 6 17"/><path d="M21.5 9c-7 0-14 1-19 4"/><path d="M3 16c4-3 9-5 16-5"/></svg></span>
+          Dribbble
+        </span>
+        <span class="strip-item">
+          <span class="strip-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2c3 3 4.5 6.5 4.5 10s-1.5 7-4.5 10c-3-3-4.5-6.5-4.5-10S9 5 12 2z"/></svg></span>
+          Personal site
+        </span>
+        <span class="strip-item">
+          <span class="strip-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3h10l4 4v14H5z"/><path d="M15 3v4h4M8 12h8M8 16h8M8 8h3"/></svg></span>
+          Read.cv
+        </span>
+        <span class="strip-item">
+          <span class="strip-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h16v16H4z" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 9.5h2v8H7zM8 7.6c-.7 0-1.2-.5-1.2-1.2S7.3 5.2 8 5.2s1.2.5 1.2 1.2-.5 1.2-1.2 1.2zM17.5 17.5h-2v-4c0-1.1-.4-1.7-1.3-1.7-1 0-1.5.7-1.5 1.7v4h-2v-8h2v.9c.4-.6 1.2-1.1 2.3-1.1 1.7 0 2.5 1 2.5 3v5.2z"/></svg></span>
+          LinkedIn
+        </span>
+        <span class="strip-item">
+          <span class="strip-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 5.5L7 4l13 1v15.5l-3 1.5L4 21V5.5z"/><path d="M9 8.5v9M9 8.5l6 8.5M15 8v8.5"/></svg></span>
+          Notion
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ TRANSFORMATION (Before/After) ============ -->
+<section class="transformation">
+  <div class="stage">
+    <div class="section-head">
+      <h2>Раньше — два дня<br>Сейчас — <i>один разговор</i></h2>
+      <p>Каждый дизайнер знает эту воронку: открыл Figma, открыл Notion, открыл ChatGPT, открыл вчерашний черновик, переписал, удалил, начал заново. Casebuilder вырезает 90% этой работы.</p>
+    </div>
+    <div class="t-split">
+      <div class="t-side t-before">
+        <div class="t-tag">Раньше</div>
+        <div class="t-stack">
+          <div class="t-tab">Figma · 12 экранов</div>
+          <div class="t-tab">Notion · черновик 2 недели</div>
+          <div class="t-tab">ChatGPT · переписать снова</div>
+          <div class="t-tab">Behance · разметка слайдов</div>
+          <div class="t-tab">Google Docs · вычитка</div>
+          <div class="t-tab">Slack · «глянь, ок?»</div>
+          <div class="t-tab">screenshots/ · 47 файлов</div>
+        </div>
+        <div class="t-time">≈ 2 дня</div>
+      </div>
+      <div class="t-arrow">→</div>
+      <div class="t-side t-after">
+        <div class="t-tag accent">С casebuilder</div>
+        <div class="t-stack clean">
+          <div class="t-step">01 → ответы AI · 30 мин</div>
+          <div class="t-step">02 → правки в редакторе · 10 мин</div>
+          <div class="t-step">03 → 5 PNG в Behance · 5 мин</div>
+        </div>
+        <div class="t-time accent">≈ 45 мин</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ LIVE EXAMPLES ============ -->
+<section id="examples">
+  <div class="stage">
+    <div class="section-head">
+      <h2>Что получаешь<br><i>на выходе</i></h2>
+      <p>5 вертикальных PNG-слайдов под Behance (1600px ширина, шрифты на ретину). Два скина на старте — выбираешь под продукт. Ниже — реальные кейсы, собранные в casebuilder.</p>
+    </div>
+    <div class="examples-grid">
+      <a href="/blockscout-case/" class="example-card">
+        <div class="ex-thumb classic">
+          <div>
+            <div class="ex-eyebrow">→ Skin 01</div>
+            <div class="ex-title">CLASSIC<br>SKIN</div>
+          </div>
+
+          <div class="ex-pages">
+            <div class="ex-page ex-page-bg3"></div>
+            <div class="ex-page ex-page-bg2"></div>
+            <div class="ex-page ex-page-bg1"></div>
+            <div class="ex-page ex-page-front">
+              <div class="ep-eyebrow">CASE · 01 / 05</div>
+              <div class="ep-title">Hero<br><em>section</em></div>
+              <div class="ep-blocks"><div></div><div></div><div></div></div>
+              <div class="ep-text"><span></span><span></span><span></span></div>
+              <div class="ep-meta"><span>2024</span><span>Designer</span></div>
+            </div>
+            <div class="ex-page-count">5 PNG</div>
+          </div>
+
+          <div class="ex-tags">
+            <span>B2B · SaaS · dev-tools</span>
+            <span>Enterprise / fintech</span>
+          </div>
+        </div>
+        <div class="ex-info">
+          <div class="ex-skin">Закруглённые углы · бежевый + оранжевый акцент</div>
+          <div class="ex-arrow">See live case →</div>
+        </div>
+      </a>
+      <a href="#" class="example-card">
+        <div class="ex-thumb editorial">
+          <div>
+            <div class="ex-eyebrow">→ Skin 02</div>
+            <div class="ex-title">EDITORIAL<br>SKIN</div>
+          </div>
+
+          <div class="ex-pages">
+            <div class="ex-page ex-page-bg3"></div>
+            <div class="ex-page ex-page-bg2"></div>
+            <div class="ex-page ex-page-bg1"></div>
+            <div class="ex-page ex-page-front">
+              <div class="ep-eyebrow">CASE · 03 / 05</div>
+              <div class="ep-title"><em>Process</em><br>section</div>
+              <div class="ep-blocks"><div></div><div></div></div>
+              <div class="ep-text"><span></span><span></span><span></span></div>
+              <div class="ep-meta"><span>2026</span><span>Brand</span></div>
+            </div>
+            <div class="ex-page-count">5 PNG</div>
+          </div>
+
+          <div class="ex-tags">
+            <span>Consumer · Brand · ecom</span>
+            <span>Дизайн-центричное</span>
+          </div>
+        </div>
+        <div class="ex-info">
+          <div class="ex-skin">Острые углы · ч/б + красный акцент</div>
+          <div class="ex-arrow">Coming soon</div>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ HOW IT WORKS ============ -->
+<section id="how">
+  <div class="stage">
+    <div class="section-head">
+      <h2>Как это<br><i>работает</i></h2>
+      <p>Три шага от сырых Figma-экранов до опубликованного кейса. Среднее время — 45 минут вместо двух дней.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01 — Upload</div>
+        <h3>Закидываешь экраны и Figma-ссылку</h3>
+        <p>AI смотрит на твои экраны, достаёт цвета, определяет тип продукта, предлагает подходящий скин кейса.</p>
+        <div class="step-visual">
+          <div class="sv-input">
+            <div class="sv-input-thumb"></div>
+            <div class="sv-input-thumb"></div>
+            <div class="sv-input-thumb"></div>
+          </div>
+        </div>
+        <div class="step-mini">
+          <span class="step-mini-dot"></span>
+          PNG / JPG / Figma file
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">02 — Interview</div>
+        <h3>Отвечаешь на короткие вопросы по 5 секциям</h3>
+        <p>AI задаёт точечные вопросы и сам формулирует тексты из твоих ответов.</p>
+        <div class="step-visual dark">
+          <div class="sv-sections">
+            <div class="sv-section"><span class="sv-section-num">01</span> Context</div>
+            <div class="sv-section"><span class="sv-section-num">02</span> Problem</div>
+            <div class="sv-section"><span class="sv-section-num">03</span> Process</div>
+            <div class="sv-section"><span class="sv-section-num">04</span> Solution</div>
+            <div class="sv-section"><span class="sv-section-num">05</span> Result</div>
+          </div>
+        </div>
+        <div class="step-mini">
+          <span class="step-mini-dot"></span>
+          голосом или текстом · 25–30 мин
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">03 — Export</div>
+        <h3>Получаешь 5 PNG готовых под Behance</h3>
+        <p>5 вертикальных 1600px-картинок, шрифты встроены, правки в любой момент через редактор.</p>
+        <div class="step-visual">
+          <div class="sv-output">
+            <div class="sv-png">01</div>
+            <div class="sv-png">02</div>
+            <div class="sv-png">03</div>
+            <div class="sv-png">04</div>
+            <div class="sv-png">05</div>
+          </div>
+        </div>
+        <div class="step-mini">
+          <span class="step-mini-dot"></span>
+          ZIP / прямая публикация
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DIFFERENTIATOR (with proof) ============ -->
+<section class="diff">
+  <div class="stage">
+    <h2>Не редактор. Не шаблон.<br><span class="accent-red">Интервьюер.</span></h2>
+    <div class="diff-features">
+      <div class="diff-feat">
+        <div class="diff-mini">
+          <div class="dm-msg">Что было главной болью на этом проекте?</div>
+          <div class="dm-msg user">Перепилить стек без поломок на 100+ сетях</div>
+        </div>
+        <h4>AI задаёт вопросы — ты отвечаешь короткими фразами</h4>
+        <p>Не пишешь портянки. Отвечаешь то, что знаешь о своём проекте. Текст для кейса формулирует AI на основе твоих коротких ответов.</p>
+      </div>
+      <div class="diff-feat">
+        <div class="diff-mini">
+          <div class="dm-page">
+            <div class="dm-line"></div>
+            <div class="dm-line short"></div>
+            <div class="dm-line"></div>
+            <div class="dm-line short"></div>
+          </div>
+        </div>
+        <h4>Один тон во всех 5 секциях</h4>
+        <p>Без «Lorem ipsum» и копипаста между Context, Process, Solution. AI помнит твой голос и держит ритм по всему кейсу.</p>
+      </div>
+      <div class="diff-feat">
+        <div class="diff-mini">
+          <div class="dm-pngs">
+            <div class="dm-png">01</div><div class="dm-png">02</div><div class="dm-png">03</div><div class="dm-png">04</div><div class="dm-png">05</div>
+          </div>
+        </div>
+        <h4>5 PNG готовых к Behance</h4>
+        <p>1600×2000px, шрифты на ретину, структура слайдов под Behance стек. Грузишь PNG напрямую, не возишься с экспортом.</p>
+      </div>
+      <div class="diff-feat">
+        <div class="diff-mini">
+          <div class="dm-figma">
+            <div class="dm-figma-icon">F</div>
+            <div class="dm-figma-text">Reading Figma exports</div>
+          </div>
+        </div>
+        <h4>AI читает твой Figma</h4>
+        <p>Импортируешь экраны — AI достаёт цвета, определяет тип продукта (B2B / consumer / dev-tools), предлагает скин и расставляет картинки в макет.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ COMPARISON TABLE ============ -->
+<section id="compare">
+  <div class="stage">
+    <div class="section-head">
+      <h2>vs <i>альтернативы</i></h2>
+      <p>Самое частое возражение: «почему не Notion-шаблон / Figma-template / просто ChatGPT?». Вот честное сравнение.</p>
+    </div>
+    <div class="compare-table">
+      <div class="ct-row ct-head">
+        <div></div>
+        <div class="ct-us">casebuilder</div>
+        <div>Notion template</div>
+        <div>Figma template</div>
+        <div>ChatGPT</div>
+        <div>С нуля</div>
+      </div>
+      <div class="ct-row">
+        <div class="ct-feature">Структура кейса заложена</div>
+        <div class="ct-us">✓</div>
+        <div>~</div>
+        <div>~</div>
+        <div>×</div>
+        <div>×</div>
+      </div>
+      <div class="ct-row">
+        <div class="ct-feature">AI пишет тексты по твоим ответам</div>
+        <div class="ct-us">✓</div>
+        <div>×</div>
+        <div>×</div>
+        <div>~</div>
+        <div>×</div>
+      </div>
+      <div class="ct-row">
+        <div class="ct-feature">PNG-экспорт под Behance</div>
+        <div class="ct-us">✓</div>
+        <div>×</div>
+        <div>требует экспорта руками</div>
+        <div>×</div>
+        <div>2–4 ч</div>
+      </div>
+      <div class="ct-row">
+        <div class="ct-feature">Один тон во всех секциях</div>
+        <div class="ct-us">✓</div>
+        <div>×</div>
+        <div>×</div>
+        <div>~</div>
+        <div>сложно</div>
+      </div>
+      <div class="ct-row">
+        <div class="ct-feature">Время на 1 кейс</div>
+        <div class="ct-us">45 мин</div>
+        <div>4–8 ч</div>
+        <div>3–6 ч</div>
+        <div>2–4 ч</div>
+        <div>1–3 дня</div>
+      </div>
+      <div class="ct-row">
+        <div class="ct-feature">Цена за 5 кейсов</div>
+        <div class="ct-us">$29</div>
+        <div>$0–15</div>
+        <div>$30–80</div>
+        <div>$0–20</div>
+        <div>$0</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOUNDER ============ -->
+<section class="founder" id="founder">
+  <div class="stage">
+    <div class="founder-grid">
+      <div class="founder-photo">
+        <img src="casebuilder-images/founder.jpeg" alt="Tati Gladilina — UI/UX дизайнер, основатель casebuilder">
+      </div>
+      <div class="founder-text">
+        <div class="eyebrow">→ Кто за этим стоит</div>
+        <h3>Сделано дизайнером, который сам устал собирать кейсы</h3>
+        <p>I'm Tati Gladilina — UI/UX дизайнер, 10+ лет в индустрии. Делала продукты для web3, e-commerce, fintech и разных стартапов.</p>
+        <p>Когда в очередной раз сидела два дня за вёрсткой кейса для Behance вместо того чтоб делать дизайн, поняла: проблема не в шаблонах. Проблема в интервью. Casebuilder — это AI, который интервьюирует тебя ровно так, как я бы себя интервьюировала, если бы могла раздвоиться.</p>
+        <p>Этот лендинг тоже собран в casebuilder — Editorial скин, 38 минут.</p>
+        <div class="founder-links">
+          <a href="https://www.instagram.com/tati_prodesign/" class="link-arrow">→ Instagram @tati_prodesign</a>
+          <a href="https://t.me/casebuilder" class="link-arrow">→ Telegram · процесс и вопросы</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TESTIMONIALS ============ -->
+<section class="testimonials">
+  <div class="stage">
+    <div class="section-head">
+      <h2>Что говорят<br><i>первые тестеры</i></h2>
+      <p>Beta открыта для 10 дизайнеров — они получают полный доступ бесплатно в обмен на честный фидбек. Места #08, #09, #10 ещё свободны.</p>
+    </div>
+    <div class="testimonials-grid">
+      <div class="testimonial">
+        <div class="t-quote">Закрыла 3 кейса за выходные. Раньше один такой собирала неделю.</div>
+        <div class="t-author">
+          <div class="t-author-name">Beta tester #03</div>
+          <div class="t-author-role">Product Designer · Berlin</div>
+        </div>
+      </div>
+      <div class="testimonial">
+        <div class="t-quote">AI задаёт вопросы лучше арт-директора. Без шуток — попадает в суть быстрее.</div>
+        <div class="t-author">
+          <div class="t-author-name">Beta tester #07</div>
+          <div class="t-author-role">UX Lead · remote</div>
+        </div>
+      </div>
+      <div class="testimonial coming">
+        <div class="t-quote">Твой отзыв здесь — присоединяйся к first 10 testers.</div>
+        <a href="#waitlist" class="t-link">→ Стать тестером</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PRICING ============ -->
+<section id="pricing">
+  <div class="stage">
+    <div class="section-head">
+      <h2>Цены<br><i>без подписки</i></h2>
+      <p>Портфолио собирают 1–2 раза в год — подписка не имеет смысла. Платишь за пачку кейсов, когда нужно. Или lifetime — для агентств и тех, кто планирует много.</p>
+    </div>
+    <div class="pricing-grid">
+      <div class="price-card">
+        <div class="price-name">Trial</div>
+        <div class="price-amount">$0</div>
+        <div class="price-muted">2 кейса · без карты</div>
+        <ul>
+          <li>2 кейса в финальном качестве</li>
+          <li>Оба скина доступны</li>
+          <li>Экспорт PNG · 2x retina</li>
+          <li>Бейдж "Made with casebuilder" в футере</li>
+          <li>AI-интервью по всем секциям</li>
+        </ul>
+        <a href="#waitlist" class="btn-primary">Забрать бесплатно</a>
+      </div>
+
+      <div class="price-card featured">
+        <div class="badge">Популярное</div>
+        <div class="price-name">5-pack</div>
+        <div class="price-amount">$29 <small>$5.8 / кейс</small></div>
+        <div class="price-muted">Для фрилансеров и дизайнеров на портфолио-спринте</div>
+        <ul>
+          <li>5 кейсов без ограничений</li>
+          <li>Без бейджа · полный контроль</li>
+          <li>Все скины включая новые</li>
+          <li>Редактирование в любой момент</li>
+          <li>ZIP-экспорт всех секций</li>
+          <li>Cloud-хранение кейсов</li>
+        </ul>
+        <a href="#waitlist" class="btn-primary">Взять pack</a>
+      </div>
+
+      <div class="price-card">
+        <div class="scarcity">
+          <div class="scarcity-text">осталось <strong>153</strong> из 200</div>
+          <div class="scarcity-bar"><div class="scarcity-fill"></div></div>
+        </div>
+        <div class="price-name">Lifetime</div>
+        <div class="price-amount">$99</div>
+        <div class="price-muted">Разовая оплата · безлимит навсегда. После 200 подписок цена $149.</div>
+        <ul>
+          <li>Безлимит кейсов</li>
+          <li>Все скины текущие и будущие</li>
+          <li>Figma-плагин (когда выйдет)</li>
+          <li>AI-улучшение текстов</li>
+          <li>Приоритет в разработке фич</li>
+          <li>Доступ для агентств до 3 юзеров</li>
+        </ul>
+        <a href="#waitlist" class="btn-primary">Забрать lifetime</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FINAL CTA + WAITLIST FORM ============ -->
+<section class="final-cta" id="waitlist">
+  <div class="stage">
+    <h2>Готова собрать первый кейс<br>за <i>45 минут</i>?</h2>
+    <form class="waitlist-form" id="waitlistForm">
+      <input type="email" name="email" placeholder="you@designer.com" required>
+      <button type="submit">Join →</button>
+    </form>
+    <div class="form-error" id="formError">Что-то пошло не так. Попробуй ещё раз через минуту.</div>
+    <div class="form-success" id="formSuccess">
+      <div class="fs-icon">✓</div>
+      <strong>Заявка принята</strong>
+      <p>Мы напишем тебе на этот email, когда откроем доступ. Обычно это занимает 1–2 недели — не дольше.</p>
+    </div>
+    <div class="hero-proof" id="waitlistProof">
+      <span class="proof-dot"></span>
+      <span><strong>247 designers</strong> в waitlist · ранний доступ + 40% скидка на lifetime</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FAQ ============ -->
+<section class="faq" id="faq">
+  <div class="stage">
+    <div class="faq-grid">
+      <h2>FAQ</h2>
+      <div class="faq-list">
+        <details class="faq-item">
+          <summary>А если мой проект непохож на шаблон?</summary>
+          <p>AI адаптирует секции под твой контекст — если у тебя не было «Process» фазы с ресёрчем, он спросит про другое, что у тебя было. Скины можно кастомизировать: цвета, шрифты, радиусы. Позже появятся ещё 3–4 скина под разные вайбы.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Это заменяет Behance?</summary>
+          <p>Нет. Ты получаешь готовые PNG-картинки под Behance — там ты их и публикуешь. Casebuilder — это инструмент сборки, не хостинг. Portfolio живёт у тебя.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Что с приватностью моих проектов и NDA-материалов?</summary>
+          <p>Твои изображения и тексты не используются для тренировки моделей. Хранятся в encrypted storage и удаляются по запросу в один клик. Для NDA-проектов рекомендуем Local mode — экраны и ответы не покидают твой браузер.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Работает ли с Dribbble, личным сайтом, Read.cv — не только Behance?</summary>
+          <p>PNG-экспорт универсальный — публикуй куда угодно. Под Dribbble добавим горизонтальный slot (4:3) в ближайшем релизе. Personal site — экспорт в HTML планируется в Lifetime-тарифе после публичного релиза.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Что делать если не нравятся тексты от AI?</summary>
+          <p>Редактор встроен — меняешь любую строчку руками. AI генерит черновик; финальный текст — всегда твой. Можно прогнать секцию через AI ещё раз с другим брифом («сделай короче», «убери технические термины»).</p>
+        </details>
+        <details class="faq-item">
+          <summary>А если мой кейс не дизайн-системный — иллюстрация, motion, брендинг?</summary>
+          <p>Структура 5 секций (Context / Problem / Process / Solution / Result) универсальная — работает для любого визуального кейса. Для брендинга и иллюстрации выйдет отдельный скин в ближайший релиз с акцентом на полноэкранные image-плашки.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Работает с Figma или нужно что-то ещё?</summary>
+          <p>Figma + картинки в PNG/JPG. Figma-плагин в работе — будет в Lifetime-тарифе. Пока — экспорт экранов руками и загрузка в casebuilder.</p>
+        </details>
+        <details class="faq-item">
+          <summary>А если я уже купил Lifetime и цена упала?</summary>
+          <p>Ты платишь один раз $99 — независимо от того, что цена потом изменится. Будущие скины и фичи включены автоматом.</p>
+        </details>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="footer">
+  <div class="stage">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <div class="footer-logo">case<span>builder</span></div>
+        <p class="footer-tagline">AI-интервьюер для дизайнеров. Собери кейс под Behance за 45 минут вместо двух дней.</p>
+      </div>
+      <div class="footer-col">
+        <h5>Product</h5>
+        <a href="#examples">Examples</a>
+        <a href="#how">How it works</a>
+        <a href="#compare">vs альтернативы</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#faq">FAQ</a>
+      </div>
+      <div class="footer-col">
+        <h5>Connect</h5>
+        <a href="https://www.instagram.com/tati_prodesign/">Instagram</a>
+        <a href="https://t.me/casebuilder">Telegram канал</a>
+        <a href="#">Twitter / X</a>
+        <a href="mailto:hello@casebuilder.design">Email</a>
+      </div>
+      <div class="footer-col">
+        <h5>Legal</h5>
+        <a href="#">Privacy</a>
+        <a href="#">Terms</a>
+        <a href="#">Refund policy</a>
+        <a href="#">NDA mode</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>© 2026 casebuilder · made with casebuilder</div>
+      <div>Designed by Tatiana Gladilina</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ============================================
+   1. Hanging prepositions / short words
+   Russian typography rule: 1–2 char words and common 3-char prepositions
+   should not appear at end of line. Replace space after them with &nbsp;.
+   Runs once on DOMContentLoaded across visible text content.
+   ============================================ */
+(function nobreakShortWords() {
+  const RU_SHORT = ['и','а','в','к','с','у','о','я','от','до','по','за','на','не','то','из','об','со','во','же','бы','ну','ли','ты','мы','он','их','им','ей','ой','ох','ах','эй','же'];
+  const RU_3 = ['под','над','при','без','для','что','как','или','это','эта','этo','эти','тот','той','том','две','три','оба','уже','ещё','еще','чем','тем','тут','там','там'];
+  const EN_SHORT = ['a','i','of','to','in','on','at','by','is','it','as','an','or','if','so','no','do','am','my','we','he','us','up'];
+  const EN_3 = ['the','for','and','but','not','our','you','can','its','out','via','off'];
+
+  const all = [...new Set([...RU_SHORT, ...RU_3, ...EN_SHORT, ...EN_3])].sort((a,b) => b.length - a.length);
+  // Build alternation pattern, escape regex chars not needed (none here)
+  const alternation = all.join('|');
+  // Match: word boundary, the short word, then ONE OR MORE whitespace
+  // Use Unicode flag for proper word boundaries with Cyrillic
+  const re = new RegExp('(^|[\\s\\u00A0])(' + alternation + ')[\\s]+', 'giu');
+
+  const SELECTORS = 'h1, h2, h3, h4, h5, p, .lead, .eyebrow, summary, .price-muted, .step-mini, .footer-tagline, .ex-skin, .strip-label, .hero-proof span, .t-tag, .t-step, .price-name';
+
+  function processNode(node) {
+    if (!node || node.nodeType !== 3) return;
+    const text = node.nodeValue;
+    if (!text || !/\s/.test(text)) return;
+    const replaced = text.replace(re, (match, before, word) => {
+      return before + word + ' ';
+    });
+    if (replaced !== text) node.nodeValue = replaced;
+  }
+
+  function walk(el) {
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
+      acceptNode: (n) => {
+        // Skip script/style and elements where we don't want changes
+        const p = n.parentNode;
+        if (!p) return NodeFilter.FILTER_REJECT;
+        const tag = p.nodeName;
+        if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'CODE' || tag === 'PRE') return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    const nodes = [];
+    let n;
+    while ((n = walker.nextNode())) nodes.push(n);
+    nodes.forEach(processNode);
+  }
+
+  function run() {
+    document.querySelectorAll(SELECTORS).forEach(walk);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else {
+    run();
+  }
+})();
+
+/* ============================================
+   2. Waitlist form → Supabase
+   POSTs the email directly into the `waitlist` table via Supabase REST API.
+   Requires the table + RLS policy (see SQL in chat).
+   ============================================ */
+(function waitlistSubmit() {
+  const SUPABASE_URL = 'https://owbjfqlmsrtwyvvgzkmq.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_AVDTzHiZSp4exvcHjNivOQ_cFgDqBEz';
+  const TABLE = 'waitlist';
+
+  const form = document.getElementById('waitlistForm');
+  if (!form) return;
+  const success = document.getElementById('formSuccess');
+  const error = document.getElementById('formError');
+  const proof = document.getElementById('waitlistProof');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    error.classList.remove('show');
+    form.classList.add('is-loading');
+
+    const email = (new FormData(form)).get('email');
+
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({
+          email: email,
+          source: 'casebuilder-landing'
+        })
+      });
+
+      if (res.ok) {
+        revealSuccess();
+      } else if (res.status === 409) {
+        // duplicate email — already in waitlist, treat as success
+        revealSuccess(true);
+      } else {
+        const text = await res.text();
+        console.warn('Supabase rejected:', res.status, text);
+        showError();
+      }
+    } catch (err) {
+      console.warn('Waitlist submit failed:', err);
+      showError();
+    } finally {
+      form.classList.remove('is-loading');
+    }
+  });
+
+  function revealSuccess(isDuplicate) {
+    form.classList.add('is-hidden');
+    if (proof) proof.style.display = 'none';
+    if (isDuplicate) {
+      const strong = success.querySelector('strong');
+      const p = success.querySelector('p');
+      if (strong) strong.textContent = 'Ты уже в waitlist';
+      if (p) p.textContent = 'Этот email мы уже записали раньше. Когда откроем доступ — напишем.';
+    }
+    success.classList.add('show');
+    success.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  function showError() {
+    error.classList.add('show');
+    form.classList.remove('is-loading');
+  }
+})();
+</script>
+</body>
+</html>
